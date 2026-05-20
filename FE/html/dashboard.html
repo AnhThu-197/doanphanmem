@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Nhóm 8 CRM</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-chart-network"></i> NHÓM 8 DAPM
+        </div>
+        <ul class="sidebar-menu">
+            <li class="active" data-page="dashboard"><i class="fas fa-home"></i> Tổng quan</li>
+            <li data-page="customers"><i class="fas fa-users"></i> Quản lý khách hàng</li>
+            <li data-page="campaigns"><i class="fas fa-bullhorn"></i> Quản lý chiến dịch</li>
+            <li data-page="revenue-sync"><i class="fas fa-file-contract"></i> Hợp đồng - Giao dịch</li>
+            <li data-page="campaign-expenses"><i class="fas fa-money-bill-wave"></i> Chi phí Chiến dịch</li>
+            <li data-page="send-message"><i class="fas fa-envelope"></i> Thông điệp</li>
+            <li data-page="trial-management"><i class="fas fa-hourglass-start"></i> Quản lý dùng thử</li>
+            <li data-page="automation"><i class="fas fa-robot"></i> Tự động hóa</li>
+            <li data-page="smart-reminders"><i class="fas fa-bell"></i> Nhắc nhở</li>
+            <li data-page="merge-duplicates"><i class="fas fa-code-branch"></i> Gộp dữ liệu</li>
+            <li data-page="api-sync"><i class="fas fa-sync-alt"></i> Đồng bộ API</li>
+            <li data-page="financial-sync"><i class="fas fa-dollar-sign"></i> Tích hợp Tài chính</li>
+            <li data-page="advanced"><i class="fas fa-star"></i> Chức năng nâng cao</li>
+            <li data-page="manage-employees"><i class="fas fa-user-tie"></i> Quản lý nhân viên</li>
+            <li data-page="reports"><i class="fas fa-chart-pie"></i> Báo cáo & Thống kê</li>
+            <li data-page="trash"><i class="fas fa-trash"></i> Thùng rác</li>
+            <li data-page="user-management"><i class="fas fa-users-cog"></i> Quản lý người dùng</li>
+            <li data-page="settings"><i class="fas fa-cog"></i> Cài đặt hệ thống</li>
+            <li data-page="profile"><i class="fas fa-user"></i> Hồ sơ cá nhân</li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <header>
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Tìm kiếm khách hàng, SĐT...">
+            </div>
+            <div class="user-profile">
+                <div class="notification" onclick="showNotifications()">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge" id="notificationBadge">3</span>
+                </div>
+                <div class="avatar" id="userAvatar" onclick="openProfileModal()" style="cursor: pointer;" title="Xem thông tin cá nhân">NV</div>
+                <div class="user-info">
+                    <strong id="userName">Trần Minh Chiến</strong><br>
+                    <small id="userRole" style="color: var(--text-light);">Nhân viên Marketing</small>
+                </div>
+                <button onclick="logout()" style="background: none; border: none; cursor: pointer; color: #94a3b8; font-size: 18px;" title="Đăng xuất">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </header>
+
+        <main id="mainContent">
+            <!-- Nội dung sẽ được load động -->
+        </main>
+    </div>
+
+    <!-- Modal thêm/sửa khách hàng -->
+    <div id="customerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="customerModalTitle">Thêm Khách Hàng</h2>
+                <button class="close-btn" onclick="closeModal('customerModal')">&times;</button>
+            </div>
+            <form id="customerForm">
+                <div class="form-group">
+                    <label for="customerName">Họ và Tên *</label>
+                    <input type="text" id="customerName" required>
+                </div>
+                <div class="form-group">
+                    <label for="customerEmail">Email *</label>
+                    <input type="email" id="customerEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="customerPhone">Số điện thoại *</label>
+                    <input type="tel" id="customerPhone" required>
+                </div>
+                <div class="form-group">
+                    <label for="customerCompany">Công ty *</label>
+                    <input type="text" id="customerCompany" required>
+                </div>
+                
+                <!-- Grid 2 cột -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label for="customerStatus">Trạng thái *</label>
+                        <select id="customerStatus" required>
+                            <option value="suspect">Người truy cập</option>
+                            <option value="lead">Khách hàng tiềm năng mới</option>
+                            <option value="prospect">Khách hàng triển vọng</option>
+                            <option value="customer">Khách hàng chính thức</option>
+                            <option value="evangelist">Khách hàng trung thành</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="customerSource">Nguồn khách hàng</label>
+                        <select id="customerSource">
+                            <option value="facebook">Facebook</option>
+                            <option value="google">Google</option>
+                            <option value="direct">Trực tiếp</option>
+                            <option value="referral">Giới thiệu</option>
+                            <option value="website">Website</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label for="customerIndustry">Ngành nghề</label>
+                        <input type="text" id="customerIndustry" placeholder="VD: Công nghệ, Bán lẻ...">
+                    </div>
+                    <div class="form-group">
+                        <label for="customerAssignedTo">Người phụ trách</label>
+                        <select id="customerAssignedTo">
+                            <option value="">-- Chọn nhân viên --</option>
+                            <!-- Sẽ được load động từ AUTH.users -->
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Phần dùng thử -->
+                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                    <h4 style="margin: 0 0 10px 0; color: #475569;">
+                        <i class="fas fa-hourglass-start"></i> Thông tin Dùng thử
+                    </h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label for="customerTrialStartDate">Ngày bắt đầu dùng thử</label>
+                            <input type="date" id="customerTrialStartDate">
+                        </div>
+                        <div class="form-group">
+                            <label for="customerTrialDays">Số ngày dùng thử</label>
+                            <input type="number" id="customerTrialDays" min="0" value="0" placeholder="0">
+                        </div>
+                    </div>
+                    <small style="color: #64748b; display: block; margin-top: 5px;">
+                        <i class="fas fa-info-circle"></i> Để trống nếu khách hàng không dùng thử
+                    </small>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('customerModal')">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal thêm tương tác -->
+    <div id="interactionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Thêm Tương tác</h2>
+                <button class="close-btn" onclick="closeModal('interactionModal')">&times;</button>
+            </div>
+            <form id="interactionForm">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label for="interactionCustomer">Khách hàng *</label>
+                        <select id="interactionCustomer" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="interactionEmployee">Nhân viên thực hiện</label>
+                        <select id="interactionEmployee">
+                            <option value="">-- Chọn nhân viên --</option>
+                            <!-- Sẽ được load động -->
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="interactionType">Loại tương tác *</label>
+                    <select id="interactionType" required>
+                        <option value="call">Gọi điện</option>
+                        <option value="email">Email</option>
+                        <option value="meeting">Cuộc họp</option>
+                        <option value="message">Tin nhắn</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="interactionContent">Nội dung *</label>
+                    <textarea id="interactionContent" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="interactionNotes">Ghi chú</label>
+                    <textarea id="interactionNotes"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="interactionFile">Đính kèm file</label>
+                    <div class="file-upload-wrapper">
+                        <input type="file" id="interactionFile" class="file-input" onchange="updateFileName(this, 'interactionFileName')">
+                        <label for="interactionFile" class="file-upload-label">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span id="interactionFileName">Chọn file hoặc kéo thả vào đây</span>
+                        </label>
+                        <small class="file-upload-hint">Hỗ trợ: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (Tối đa 10MB)</small>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('interactionModal')">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal thêm chiến dịch -->
+    <div id="campaignModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="campaignModalTitle">Thêm Chiến dịch</h2>
+                <button class="close-btn" onclick="closeModal('campaignModal')">&times;</button>
+            </div>
+            <form id="campaignForm">
+                <div class="form-group">
+                    <label for="campaignName">Tên chiến dịch *</label>
+                    <input type="text" id="campaignName" required>
+                </div>
+                <div class="form-group">
+                    <label for="campaignDescription">Mô tả</label>
+                    <textarea id="campaignDescription" rows="3"></textarea>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label for="campaignType">Loại chiến dịch *</label>
+                        <select id="campaignType" required>
+                            <option value="">-- Chọn loại --</option>
+                            <option value="Email">Email</option>
+                            <option value="SMS">SMS</option>
+                            <option value="Event">Sự kiện</option>
+                            <option value="Online Ads">Quảng cáo trực tuyến</option>
+                            <option value="Zalo">Zalo</option>
+                            <option value="Khác">Khác</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="campaignManager">Người quản lý</label>
+                        <select id="campaignManager">
+                            <option value="">-- Chọn người quản lý --</option>
+                            <!-- Sẽ được load động -->
+                        </select>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label for="campaignStartDate">Ngày bắt đầu *</label>
+                        <input type="date" id="campaignStartDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="campaignEndDate">Ngày kết thúc *</label>
+                        <input type="date" id="campaignEndDate" required>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label for="campaignBudget">Ngân sách (VND) *</label>
+                        <input type="number" id="campaignBudget" required min="0" step="1000">
+                    </div>
+                    <div class="form-group">
+                        <label for="campaignStatus">Trạng thái *</label>
+                        <select id="campaignStatus" required>
+                            <option value="planning">Lên kế hoạch</option>
+                            <option value="active">Đang chạy</option>
+                            <option value="completed">Hoàn thành</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('campaignModal')">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal cập nhật thông tin cá nhân -->
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Cập nhật Thông tin Cá nhân</h2>
+                <button class="close-btn" onclick="closeModal('profileModal')">&times;</button>
+            </div>
+            <form id="profileForm">
+                <div class="form-group">
+                    <label for="profileName">Họ và Tên</label>
+                    <input type="text" id="profileName" required>
+                </div>
+                <div class="form-group">
+                    <label for="profileEmail">Email</label>
+                    <input type="email" id="profileEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="profilePhone">Số điện thoại</label>
+                    <input type="tel" id="profilePhone">
+                </div>
+                <div class="form-group">
+                    <label for="profileDepartment">Phòng ban</label>
+                    <input type="text" id="profileDepartment">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('profileModal')">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal đổi mật khẩu -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Đổi Mật khẩu</h2>
+                <button class="close-btn" onclick="closeModal('passwordModal')">&times;</button>
+            </div>
+            <form id="passwordForm">
+                <div class="form-group">
+                    <label for="oldPassword">Mật khẩu cũ *</label>
+                    <input type="password" id="oldPassword" autocomplete="current-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">Mật khẩu mới *</label>
+                    <input type="password" id="newPassword" autocomplete="new-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Xác nhận mật khẩu *</label>
+                    <input type="password" id="confirmPassword" autocomplete="new-password" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('passwordModal')">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Đổi mật khẩu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal quên mật khẩu -->
+    <div id="forgotPasswordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Quên Mật khẩu</h2>
+                <button class="close-btn" onclick="closeModal('forgotPasswordModal')">&times;</button>
+            </div>
+            <form id="forgotPasswordForm">
+                <div class="form-group">
+                    <label for="resetEmail">Email *</label>
+                    <input type="email" id="resetEmail" required>
+                </div>
+                <p style="font-size: 12px; color: #94a3b8; margin-bottom: 15px;">Mật khẩu mới sẽ được gửi đến email của bạn</p>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('forgotPasswordModal')">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Gửi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal quản lý mẫu thông điệp -->
+    <div id="templateModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="templateModalTitle">Thêm Mẫu Thông điệp</h2>
+                <button class="close-btn" onclick="closeModal('templateModal')">&times;</button>
+            </div>
+            <form id="templateForm">
+                <div class="form-group">
+                    <label for="templateName">Tên mẫu *</label>
+                    <input type="text" id="templateName" required>
+                </div>
+                <div class="form-group">
+                    <label for="templateType">Loại *</label>
+                    <select id="templateType" required>
+                        <option value="email">Email</option>
+                        <option value="sms">SMS</option>
+                        <option value="zalo">Zalo</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="templateContent">Nội dung *</label>
+                    <textarea id="templateContent" required style="min-height: 150px;"></textarea>
+                </div>
+                <p style="font-size: 12px; color: #94a3b8;">Sử dụng {customerName}, {date}, {time} để chèn biến động</p>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('templateModal')">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal gửi thông điệp -->
+    <div id="sendMessageModal" class="modal">
+        <div class="modal-content" style="max-width: 800px; max-height: 85vh;">
+            <div class="modal-header">
+                <h2>Gửi Thông điệp</h2>
+                <button class="close-btn" onclick="closeModal('sendMessageModal')">&times;</button>
+            </div>
+            <form id="sendMessageForm" onsubmit="sendMessage(event)">
+                <div style="padding: 20px; overflow-y: auto; max-height: calc(85vh - 120px);">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label for="messageCustomer">Khách hàng *</label>
+                            <select id="messageCustomer" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="messageType">Loại *</label>
+                            <select id="messageType" required>
+                                <option value="email">Email</option>
+                                <option value="sms">SMS</option>
+                                <option value="zalo">Zalo</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="messageTemplate">Chọn mẫu</label>
+                        <select id="messageTemplate"></select>
+                        <small style="color: #94a3b8; display: block; margin-top: 5px;">Chọn mẫu để tự động điền nội dung</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="messageContent">Nội dung *</label>
+                        <textarea id="messageContent" required style="min-height: 150px;"></textarea>
+                        <small style="color: #94a3b8; display: block; margin-top: 5px;">Sử dụng {customerName}, {date}, {time} để chèn biến động</small>
+                    </div>
+                    
+                    <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <h4 style="margin-bottom: 10px;">Đính kèm Thông tin Quảng bá</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div class="form-group">
+                                <label for="messagePromoTitle">Tiêu đề Khuyến mãi</label>
+                                <input type="text" id="messagePromoTitle" placeholder="VD: Giảm 20% cho đơn hàng tiếp theo">
+                            </div>
+                            <div class="form-group">
+                                <label for="messagePromoCode">Mã Khuyến mãi</label>
+                                <input type="text" id="messagePromoCode" placeholder="VD: PROMO20">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="messagePromoDescription">Mô tả Khuyến mãi</label>
+                            <textarea id="messagePromoDescription" style="min-height: 80px;" placeholder="Mô tả chi tiết về khuyến mãi, điều kiện áp dụng, thời hạn..."></textarea>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div class="form-group">
+                                <label for="messagePromoExpiry">Hạn sử dụng</label>
+                                <input type="date" id="messagePromoExpiry">
+                            </div>
+                            <div class="form-group">
+                                <label for="messagePromoLink">Liên kết (URL)</label>
+                                <input type="url" id="messagePromoLink" placeholder="https://example.com">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <h4 style="margin-bottom: 10px;">Tùy chọn Gửi</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="messageSchedule">
+                                <span>Lên lịch gửi</span>
+                            </label>
+                            <div id="scheduleTime" style="display: none;">
+                                <input type="datetime-local" id="messageScheduleTime">
+                            </div>
+                        </div>
+                        <label style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
+                            <input type="checkbox" id="messageTrackOpen" checked>
+                            <span>Theo dõi mở thư</span>
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="messageNotes">Ghi chú nội bộ</label>
+                        <textarea id="messageNotes" style="min-height: 60px;" placeholder="Ghi chú cho nhân viên khác..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="form-actions" style="padding: 15px 20px; border-top: 1px solid #e2e8f0;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('sendMessageModal')">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Gửi Thông điệp</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal xem chi tiết khách hàng -->
+    <div id="customerDetailModal" class="modal">
+        <div class="modal-content" style="max-width: 900px; max-height: 85vh;">
+            <div class="modal-header">
+                <h2>Chi tiết Khách hàng</h2>
+                <button class="close-btn" onclick="closeModal('customerDetailModal')">&times;</button>
+            </div>
+            <div style="padding: 20px;">
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('detail-info')">Thông tin</button>
+                    <button class="tab-btn" onclick="switchTab('detail-interactions')">Tương tác</button>
+                    <button class="tab-btn" onclick="switchTab('detail-campaigns')">Chiến dịch</button>
+                </div>
+                
+                <div id="detail-info" class="tab-content active">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <p><strong>Họ và Tên:</strong> <span id="detailName"></span></p>
+                            <p><strong>Email:</strong> <span id="detailEmail"></span></p>
+                            <p><strong>Số điện thoại:</strong> <span id="detailPhone"></span></p>
+                            <p><strong>Công ty:</strong> <span id="detailCompany"></span></p>
+                        </div>
+                        <div>
+                            <p><strong>Trạng thái:</strong> <span id="detailStatus"></span></p>
+                            <p><strong>Nguồn:</strong> <span id="detailSource"></span></p>
+                            <p><strong>Ngành nghề:</strong> <span id="detailIndustry"></span></p>
+                            <p><strong>Điểm Lead:</strong> <span id="detailScore"></span></p>
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <p><strong>Ngày tạo:</strong> <span id="detailCreatedDate"></span></p>
+                        <p><strong>Tương tác cuối:</strong> <span id="detailLastInteraction"></span></p>
+                    </div>
+                </div>
+                
+                <div id="detail-interactions" class="tab-content">
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="margin-bottom: 15px;">Danh sách Tương tác</h3>
+                        <table style="width: 100%; margin-bottom: 20px;">
+                            <thead>
+                                <tr>
+                                    <th>Loại</th>
+                                    <th>Nội dung</th>
+                                    <th>Ngày</th>
+                                    <th>Ghi chú</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detailInteractionsTable">
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div style="background: #f8fafc; padding: 20px; border-radius: 8px;">
+                        <h3 style="margin-bottom: 15px;">Thêm Tương tác Mới</h3>
+                        <form id="detailInteractionForm" onsubmit="saveDetailInteraction(event)">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                <div class="form-group">
+                                    <label for="detailInteractionType">Loại tương tác *</label>
+                                    <select id="detailInteractionType" required>
+                                        <option value="call">Gọi điện</option>
+                                        <option value="email">Email</option>
+                                        <option value="meeting">Cuộc họp</option>
+                                        <option value="message">Tin nhắn</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="detailInteractionDate">Ngày *</label>
+                                    <input type="date" id="detailInteractionDate" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="detailInteractionContent">Nội dung *</label>
+                                <textarea id="detailInteractionContent" required style="min-height: 80px;"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="detailInteractionNotes">Ghi chú</label>
+                                <textarea id="detailInteractionNotes" style="min-height: 60px;"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="detailInteractionFile">Đính kèm file</label>
+                                <div class="file-upload-wrapper">
+                                    <input type="file" id="detailInteractionFile" class="file-input" onchange="updateFileName(this, 'detailInteractionFileName')">
+                                    <label for="detailInteractionFile" class="file-upload-label">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                        <span id="detailInteractionFileName">Chọn file hoặc kéo thả vào đây</span>
+                                    </label>
+                                    <small class="file-upload-hint">Hỗ trợ: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (Tối đa 10MB)</small>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">Thêm Tương tác</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div id="detail-campaigns" class="tab-content">
+                    <table style="width: 100%; margin-top: 10px;">
+                        <thead>
+                            <tr>
+                                <th>Tên Chiến dịch</th>
+                                <th>Trạng thái</th>
+                                <th>Ngày bắt đầu</th>
+                                <th>Ngày kết thúc</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailCampaignsTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Modal tự động hóa marketing -->
+    <div id="automationModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2>Tự động hóa Marketing</h2>
+                <button class="close-btn" onclick="closeModal('automationModal')">&times;</button>
+            </div>
+            <div style="padding: 20px;">
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('automation-workflow')">Kịch bản chăm sóc</button>
+                    <button class="tab-btn" onclick="switchTab('automation-scoring')">Chấm điểm tiềm năng</button>
+                </div>
+                
+                <div id="automation-workflow" class="tab-content active">
+                    <h3>Tạo Kịch bản Chăm sóc Tự động</h3>
+                    <div style="background: #f1f5f9; padding: 20px; border-radius: 8px; margin-top: 15px;">
+                        <div class="form-group">
+                            <label for="workflowName">Tên Kịch bản *</label>
+                            <input type="text" id="workflowName" placeholder="VD: Chăm sóc Lead mới">
+                        </div>
+                        <div class="form-group">
+                            <label for="workflowTrigger">Điều kiện kích hoạt *</label>
+                            <select id="workflowTrigger">
+                                <option value="new_lead">Khách hàng mới (Lead)</option>
+                                <option value="email_open">Khách hàng mở Email</option>
+                                <option value="form_submit">Khách hàng điền Form</option>
+                                <option value="page_visit">Khách hàng truy cập trang</option>
+                            </select>
+                        </div>
+                        
+                        <h4 style="margin-top: 20px;">Chuỗi Hành động</h4>
+                        <div id="workflowActions" style="background: white; padding: 15px; border-radius: 5px;">
+                            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                                <select style="flex: 1; padding: 8px; border: 1px solid #e2e8f0; border-radius: 5px;">
+                                    <option value="">-- Chọn hành động --</option>
+                                    <option value="send_email">Gửi Email</option>
+                                    <option value="send_sms">Gửi SMS</option>
+                                    <option value="create_task">Tạo Nhiệm vụ</option>
+                                    <option value="wait">Chờ (ngày)</option>
+                                    <option value="condition">Điều kiện</option>
+                                </select>
+                                <button class="btn btn-primary" style="padding: 8px 15px;">Thêm</button>
+                            </div>
+                            <div style="background: #f8fafc; padding: 10px; border-radius: 5px; border-left: 3px solid #2563eb;">
+                                <p>1. Gửi Email: "Giới thiệu sản phẩm"</p>
+                            </div>
+                            <div style="background: #f8fafc; padding: 10px; border-radius: 5px; border-left: 3px solid #2563eb; margin-top: 10px;">
+                                <p>2. Chờ 3 ngày</p>
+                            </div>
+                            <div style="background: #f8fafc; padding: 10px; border-radius: 5px; border-left: 3px solid #2563eb; margin-top: 10px;">
+                                <p>3. Điều kiện: Nếu khách mở email → Tạo nhắc nhở gọi điện</p>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions" style="margin-top: 20px;">
+                            <button type="button" class="btn btn-secondary" onclick="closeModal('automationModal')">Hủy</button>
+                            <button type="button" class="btn btn-primary">Lưu Kịch bản</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="automation-scoring" class="tab-content">
+                    <h3>Chấm điểm Tiềm năng (Lead Scoring)</h3>
+                    <div style="background: #f1f5f9; padding: 20px; border-radius: 8px; margin-top: 15px;">
+                        <table style="width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th>Hành động</th>
+                                    <th>Điểm</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Khách truy cập trang bảng giá</td>
+                                    <td><input type="number" value="10" style="width: 60px; padding: 5px;"></td>
+                                    <td><button class="btn-delete" style="padding: 5px 10px;"><i class="fas fa-trash"></i></button></td>
+                                </tr>
+                                <tr>
+                                    <td>Khách tải tài liệu</td>
+                                    <td><input type="number" value="5" style="width: 60px; padding: 5px;"></td>
+                                    <td><button class="btn-delete" style="padding: 5px 10px;"><i class="fas fa-trash"></i></button></td>
+                                </tr>
+                                <tr>
+                                    <td>Khách mở Email</td>
+                                    <td><input type="number" value="3" style="width: 60px; padding: 5px;"></td>
+                                    <td><button class="btn-delete" style="padding: 5px 10px;"><i class="fas fa-trash"></i></button></td>
+                                </tr>
+                                <tr>
+                                    <td>Khách click link trong Email</td>
+                                    <td><input type="number" value="8" style="width: 60px; padding: 5px;"></td>
+                                    <td><button class="btn-delete" style="padding: 5px 10px;"><i class="fas fa-trash"></i></button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <div style="margin-top: 20px; padding: 15px; background: white; border-radius: 5px;">
+                            <h4>Ngưỡng Chuyển đổi</h4>
+                            <div class="form-group">
+                                <label>Điểm ≥ <input type="number" value="50" style="width: 60px; padding: 5px;"> → Chuyển trạng thái thành "Khách hàng nóng"</label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions" style="margin-top: 20px;">
+                            <button type="button" class="btn btn-secondary" onclick="closeModal('automationModal')">Hủy</button>
+                            <button type="button" class="btn btn-primary">Lưu Cấu hình</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal quản lý trạng thái dùng thử -->
+    <div id="trialModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2 id="trialModalTitle">Thêm dùng thử</h2>
+                <button class="close-btn" onclick="closeModal('trialModal')">&times;</button>
+            </div>
+            <form id="trialForm" onsubmit="saveTrial(event)">
+                <div style="padding: 20px; overflow-y: auto; max-height: calc(85vh - 120px);">
+                    <div class="form-group">
+                        <label for="trialCustomer">Khách hàng *</label>
+                        <select id="trialCustomer" required></select>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label for="trialStartDate">Ngày Bắt đầu *</label>
+                            <input type="date" id="trialStartDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="trialDays">Số ngày Dùng thử *</label>
+                            <input type="number" id="trialDays" value="30" min="1" required>
+                        </div>
+                    </div>
+                    
+                    <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <p><strong>Ngày Kết thúc dự kiến:</strong> <span id="trialEndDateDisplay">-</span></p>
+                        <p><strong>Thời gian Còn lại:</strong> <span id="trialRemainingDisplay">-</span></p>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label for="trialReminderDays">Nhắc nhở trước (ngày)</label>
+                            <input type="number" id="trialReminderDays" value="3" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="trialReminderEmail">Email Nhắc nhở</label>
+                            <input type="email" id="trialReminderEmail" placeholder="Để trống = dùng email khách hàng">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="trialNotes">Ghi chú</label>
+                        <textarea id="trialNotes" style="min-height: 80px;" placeholder="Ghi chú về dùng thử..."></textarea>
+                    </div>
+                    
+                    <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <h4 style="margin-bottom: 10px; color: #92400e;">Thông tin Dùng thử</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div>
+                                <p><strong>Tính năng:</strong></p>
+                                <label style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" id="trialFeature1" checked>
+                                    <span>Tính năng cơ bản</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" id="trialFeature2" checked>
+                                    <span>Tính năng nâng cao</span>
+                                </label>
+                            </div>
+                            <div>
+                                <p><strong>Hỗ trợ:</strong></p>
+                                <label style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" id="trialSupport1" checked>
+                                    <span>Email support</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" id="trialSupport2">
+                                    <span>Phone support</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-actions" style="padding: 15px 20px; border-top: 1px solid #e2e8f0;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('trialModal')">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal chi tiết dùng thử -->
+    <div id="trialDetailModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2>Chi tiết Dùng thử</h2>
+                <button class="close-btn" onclick="closeModal('trialDetailModal')">&times;</button>
+            </div>
+            <div style="padding: 20px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <div>
+                        <p><strong>Khách hàng:</strong></p>
+                        <p id="detailTrialCustomer" style="color: #0f172a; font-size: 16px; margin-bottom: 15px;"></p>
+                        
+                        <p><strong>Ngày Bắt đầu:</strong></p>
+                        <p id="detailTrialStartDate" style="color: #334155; margin-bottom: 15px;"></p>
+                        
+                        <p><strong>Ngày Kết thúc:</strong></p>
+                        <p id="detailTrialEndDate" style="color: #334155; margin-bottom: 15px;"></p>
+                    </div>
+                    <div>
+                        <p><strong>Thời gian Còn lại:</strong></p>
+                        <p id="detailTrialRemaining" style="color: #2B4856; font-weight: 600; font-size: 18px; margin-bottom: 15px;"></p>
+                        
+                        <p><strong>Trạng thái:</strong></p>
+                        <p id="detailTrialStatus" style="margin-bottom: 15px;"></p>
+                        
+                        <p><strong>Nhắc nhở trước:</strong></p>
+                        <p id="detailTrialReminder" style="color: #334155; margin-bottom: 15px;"></p>
+                    </div>
+                </div>
+                
+                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <p><strong>Ghi chú:</strong></p>
+                    <p id="detailTrialNotes" style="color: #334155;"></p>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('trialDetailModal')">Đóng</button>
+                    <button type="button" class="btn btn-primary" onclick="editTrialFromDetail()">Chỉnh sửa</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal gộp khách hàng trùng lặp -->
+    <div id="mergeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Gộp Khách hàng Trùng lặp</h2>
+                <button class="close-btn" onclick="closeModal('mergeModal')">&times;</button>
+            </div>
+            <div style="padding: 20px;">
+                <div style="background: #fef3c7; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                    <p><i class="fas fa-exclamation-triangle"></i> <strong>Cảnh báo:</strong> Hệ thống phát hiện khách hàng trùng lặp</p>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div style="border: 1px solid #e2e8f0; padding: 15px; border-radius: 5px;">
+                        <h4>Khách hàng 1</h4>
+                        <p><strong>Tên:</strong> Nguyễn Văn A</p>
+                        <p><strong>Email:</strong> nguyenvana@gmail.com</p>
+                        <p><strong>SĐT:</strong> 0987654321</p>
+                        <p><strong>Tương tác:</strong> 5</p>
+                    </div>
+                    <div style="border: 1px solid #e2e8f0; padding: 15px; border-radius: 5px;">
+                        <h4>Khách hàng 2</h4>
+                        <p><strong>Tên:</strong> Nguyễn A</p>
+                        <p><strong>Email:</strong> nguyena@gmail.com</p>
+                        <p><strong>SĐT:</strong> 0987654321</p>
+                        <p><strong>Tương tác:</strong> 2</p>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; padding: 15px; background: #f1f5f9; border-radius: 5px;">
+                    <p><strong>Hành động:</strong> Gộp tất cả tương tác của khách hàng 2 vào khách hàng 1 và xóa khách hàng 2</p>
+                </div>
+                
+                <div class="form-actions" style="margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('mergeModal')">Hủy</button>
+                    <button type="button" class="btn btn-danger">Gộp Khách hàng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal phân bổ khách hàng -->
+    <div id="assignModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Phân bổ Khách hàng</h2>
+                <button class="close-btn" onclick="closeModal('assignModal')">&times;</button>
+            </div>
+            <div style="padding: 20px;">
+                <div class="form-group">
+                    <label for="assignMethod">Phương pháp phân bổ *</label>
+                    <select id="assignMethod" onchange="updateAssignUI()">
+                        <option value="manual">Thủ công</option>
+                        <option value="round_robin">Xoay vòng chia đều</option>
+                        <option value="ratio">Chia theo tỷ lệ</option>
+                    </select>
+                </div>
+                
+                <div id="assignManual" style="display: none;">
+                    <div class="form-group">
+                        <label for="assignEmployee">Chọn nhân viên *</label>
+                        <select id="assignEmployee">
+                            <option value="">-- Chọn --</option>
+                            <option value="1">Trần Minh Chiến</option>
+                            <option value="2">Nguyễn Văn B</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="assignCustomers">Chọn khách hàng *</label>
+                        <div style="border: 1px solid #e2e8f0; padding: 10px; border-radius: 5px; max-height: 200px; overflow-y: auto;">
+                            <label><input type="checkbox"> Nguyễn Văn A</label><br>
+                            <label><input type="checkbox"> Trần Thị B</label><br>
+                            <label><input type="checkbox"> Lê Văn C</label><br>
+                            <label><input type="checkbox"> Phạm Thị D</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="assignRoundRobin" style="display: none;">
+                    <div style="background: #f1f5f9; padding: 15px; border-radius: 5px;">
+                        <p><strong>Phương pháp:</strong> Chia đều khách hàng cho các nhân viên đang online</p>
+                        <p style="margin-top: 10px;"><strong>Nhân viên:</strong></p>
+                        <label><input type="checkbox" checked> Trần Minh Chiến (Online)</label><br>
+                        <label><input type="checkbox"> Nguyễn Văn B (Offline)</label>
+                    </div>
+                </div>
+                
+                <div id="assignRatio" style="display: none;">
+                    <div style="background: #f1f5f9; padding: 15px; border-radius: 5px;">
+                        <p><strong>Chia theo tỷ lệ:</strong></p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                            <div>
+                                <label>Trần Minh Chiến: <input type="number" value="60" style="width: 50px;"> %</label>
+                            </div>
+                            <div>
+                                <label>Nguyễn Văn B: <input type="number" value="40" style="width: 50px;"> %</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-actions" style="margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('assignModal')">Hủy</button>
+                    <button type="button" class="btn btn-primary">Phân bổ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal chi tiết chiến dịch -->
+    <div id="campaignDetailModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2>Chi tiết Chiến dịch</h2>
+                <button class="close-btn" onclick="closeModal('campaignDetailModal')">&times;</button>
+            </div>
+            <div style="padding: 20px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <p><strong>Tên chiến dịch:</strong></p>
+                        <p id="detailCampaignName" style="color: #0f172a; font-size: 16px; margin-bottom: 15px;"></p>
+                        
+                        <p><strong>Ngày bắt đầu:</strong></p>
+                        <p id="detailCampaignStartDate" style="color: #334155; margin-bottom: 15px;"></p>
+                        
+                        <p><strong>Ngày kết thúc:</strong></p>
+                        <p id="detailCampaignEndDate" style="color: #334155; margin-bottom: 15px;"></p>
+                    </div>
+                    <div>
+                        <p><strong>Ngân sách:</strong></p>
+                        <p id="detailCampaignBudget" style="color: #2B4856; font-weight: 600; font-size: 16px; margin-bottom: 15px;"></p>
+                        
+                        <p><strong>Trạng thái:</strong></p>
+                        <p id="detailCampaignStatus" style="margin-bottom: 15px;"></p>
+                        
+                        <p><strong>Mô tả:</strong></p>
+                        <p id="detailCampaignDescription" style="color: #334155; margin-bottom: 15px;"></p>
+                    </div>
+                </div>
+                <div class="form-actions" style="margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('campaignDetailModal')">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal đề nghị xóa khách hàng -->
+    <div id="requestDeleteModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>Đề nghị Xóa Khách hàng</h2>
+                <button class="close-btn" onclick="closeModal('requestDeleteModal')">&times;</button>
+            </div>
+            <form id="requestDeleteForm" onsubmit="submitDeleteRequest(event)">
+                <div style="padding: 20px;">
+                    <div class="form-group">
+                        <label><strong>Khách hàng:</strong></label>
+                        <p id="requestDeleteCustomerName" style="color: #0f172a; font-size: 16px; margin-bottom: 15px;"></p>
+                    </div>
+                    <div class="form-group">
+                        <label for="requestDeleteReason">Lí do đề nghị xóa *</label>
+                        <textarea id="requestDeleteReason" required style="min-height: 100px;"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('requestDeleteModal')">Hủy</button>
+                        <button type="submit" class="btn btn-primary">Gửi Đề nghị</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal tạo/sửa kịch bản chăm sóc -->
+    <div id="workflowModal" class="modal">
+        <div class="modal-content" style="max-width: 900px; max-height: 85vh;">
+            <div class="modal-header">
+                <h2 id="workflowModalTitle">Tạo Kịch bản Chăm sóc</h2>
+                <button class="close-btn" onclick="closeModal('workflowModal')">&times;</button>
+            </div>
+            <form id="workflowForm" onsubmit="saveWorkflow(event)">
+                <div style="padding: 20px; overflow-y: auto; max-height: calc(85vh - 120px);">
+                    <div class="form-group">
+                        <label for="workflowName">Tên Kịch bản *</label>
+                        <input type="text" id="workflowName" placeholder="VD: Chăm sóc Lead mới" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="workflowTrigger">Điều kiện Kích hoạt *</label>
+                        <select id="workflowTrigger" required>
+                            <option value="new_lead">Khách hàng mới (Lead)</option>
+                            <option value="email_open">Khách hàng mở Email</option>
+                            <option value="email_not_opened">Khách hàng không mở Email</option>
+                            <option value="form_submit">Khách hàng điền Form</option>
+                            <option value="page_visit">Khách hàng truy cập trang</option>
+                            <option value="high_score">Khách hàng đạt điểm cao</option>
+                        </select>
+                    </div>
+                    
+                    <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 15px;">
+                        <h3 style="margin-bottom: 15px;">Chuỗi Hành động</h3>
+                        <div id="workflowActions" style="background: white; padding: 15px; border-radius: 5px; border: 1px solid #e2e8f0;">
+                            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                                <select id="actionType" style="flex: 1; padding: 8px; border: 1px solid #e2e8f0; border-radius: 5px;">
+                                    <option value="">-- Chọn hành động --</option>
+                                    <option value="send_email">Gửi Email</option>
+                                    <option value="send_sms">Gửi SMS</option>
+                                    <option value="create_task">Tạo Nhiệm vụ</option>
+                                    <option value="wait">Chờ (ngày)</option>
+                                    <option value="condition">Điều kiện</option>
+                                </select>
+                                <button type="button" class="btn btn-primary" style="padding: 8px 15px;" onclick="addWorkflowAction()">Thêm</button>
+                            </div>
+                            <div id="actionsList" style="max-height: 300px; overflow-y: auto;">
+                                <div style="background: #f8fafc; padding: 10px; border-radius: 5px; border-left: 3px solid #2563eb; margin-bottom: 10px;">
+                                    <p>1. Gửi Email: "Giới thiệu sản phẩm"</p>
+                                </div>
+                                <div style="background: #f8fafc; padding: 10px; border-radius: 5px; border-left: 3px solid #2563eb; margin-bottom: 10px;">
+                                    <p>2. Chờ 3 ngày</p>
+                                </div>
+                                <div style="background: #f8fafc; padding: 10px; border-radius: 5px; border-left: 3px solid #2563eb;">
+                                    <p>3. Điều kiện: Nếu khách mở email → Tạo nhắc nhở gọi điện</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label for="workflowStatus">Trạng thái *</label>
+                            <select id="workflowStatus" required>
+                                <option value="active">Hoạt động</option>
+                                <option value="inactive">Tạm dừng</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="workflowDescription">Mô tả</label>
+                            <input type="text" id="workflowDescription" placeholder="Mô tả kịch bản...">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-actions" style="padding: 15px 20px; border-top: 1px solid #e2e8f0;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('workflowModal')">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu Kịch bản</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal xem chi tiết kịch bản -->
+    <div id="workflowDetailModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2>Chi tiết Kịch bản Chăm sóc</h2>
+                <button class="close-btn" onclick="closeModal('workflowDetailModal')">&times;</button>
+            </div>
+            <div style="padding: 20px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <div>
+                        <p><strong>Tên Kịch bản:</strong></p>
+                        <p id="detailWorkflowName" style="color: #0f172a; font-size: 16px; margin-bottom: 15px;"></p>
+                        
+                        <p><strong>Điều kiện Kích hoạt:</strong></p>
+                        <p id="detailWorkflowTrigger" style="color: #334155; margin-bottom: 15px;"></p>
+                    </div>
+                    <div>
+                        <p><strong>Trạng thái:</strong></p>
+                        <p id="detailWorkflowStatus" style="margin-bottom: 15px;"></p>
+                        
+                        <p><strong>Ngày Tạo:</strong></p>
+                        <p id="detailWorkflowDate" style="color: #334155; margin-bottom: 15px;"></p>
+                    </div>
+                </div>
+                
+                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <h3 style="margin-bottom: 10px;">Chuỗi Hành động</h3>
+                    <div id="detailWorkflowActions" style="background: white; padding: 10px; border-radius: 5px;"></div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('workflowDetailModal')">Đóng</button>
+                    <button type="button" class="btn btn-primary" onclick="editWorkflowFromDetail()">Chỉnh sửa</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal tạo/sửa quy tắc chấm điểm -->
+    <div id="scoringRuleModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 id="scoringRuleModalTitle">Thêm Quy tắc Chấm điểm</h2>
+                <button class="close-btn" onclick="closeModal('scoringRuleModal')">&times;</button>
+            </div>
+            <form id="scoringRuleForm" onsubmit="saveScoringRule(event)">
+                <div style="padding: 20px;">
+                    <div class="form-group">
+                        <label for="scoringAction">Hành động *</label>
+                        <input type="text" id="scoringAction" placeholder="VD: Khách truy cập trang bảng giá" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="scoringPoints">Điểm *</label>
+                        <input type="number" id="scoringPoints" min="1" placeholder="VD: 10" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="scoringActive" checked>
+                            <span>Kích hoạt quy tắc này</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-actions" style="padding: 15px 20px; border-top: 1px solid #e2e8f0;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('scoringRuleModal')">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu Quy tắc</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal tạo/sửa lịch hẹn -->
+    <div id="appointmentModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2 id="appointmentModalTitle">Tạo Lịch hẹn</h2>
+                <button class="close-btn" onclick="closeModal('appointmentModal')">&times;</button>
+            </div>
+            <form id="appointmentForm" onsubmit="saveAppointment(event)">
+                <div style="padding: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label for="appointmentCustomer">Khách hàng *</label>
+                            <select id="appointmentCustomer" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="appointmentEmployee">Nhân viên được gán</label>
+                            <select id="appointmentEmployee">
+                                <option value="">-- Chọn nhân viên --</option>
+                                <!-- Sẽ được load động -->
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="appointmentTitle">Tiêu đề *</label>
+                        <input type="text" id="appointmentTitle" placeholder="VD: Gọi điện tư vấn" required>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label for="appointmentType">Loại lịch hẹn *</label>
+                            <select id="appointmentType" required onchange="toggleReminderMessageType()">
+                                <option value="call">Gọi điện</option>
+                                <option value="meeting">Cuộc họp trực tiếp</option>
+                                <option value="video">Họp trực tuyến</option>
+                                <option value="email">Gửi Email</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="appointmentResult">Kết quả</label>
+                            <select id="appointmentResult">
+                                <option value="">-- Chưa thực hiện --</option>
+                                <option value="Thành công">Thành công</option>
+                                <option value="Khách bận">Khách bận</option>
+                                <option value="Khách từ chối">Khách từ chối</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Hiển thị khi chọn meeting hoặc video -->
+                    <div id="meetingLocationSection" style="display: none;">
+                        <div class="form-group">
+                            <label for="appointmentLocation">Địa điểm / Link họp *</label>
+                            <input type="text" id="appointmentLocation" placeholder="VD: Phòng họp A / https://meet.google.com/xxx">
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label for="appointmentDate">Ngày *</label>
+                            <input type="date" id="appointmentDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="appointmentTime">Giờ *</label>
+                            <input type="time" id="appointmentTime" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="appointmentReminder">Nhắc nhở trước (phút)</label>
+                        <select id="appointmentReminder">
+                            <option value="30">30 phút</option>
+                            <option value="60">1 giờ</option>
+                            <option value="1440">1 ngày</option>
+                        </select>
+                    </div>
+                    
+                    <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <h4 style="margin-bottom: 10px;">Nhắc nhở 2 chiều</h4>
+                        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <input type="checkbox" id="reminderEmployee" checked>
+                            <span>Nhắc nhở nhân viên</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                            <input type="checkbox" id="reminderCustomer" checked onchange="toggleReminderMessageType()">
+                            <span>Nhắc nhở khách hàng</span>
+                        </label>
+                        
+                        <!-- Hiển thị khi chọn meeting/video và bật nhắc nhở khách hàng -->
+                        <div id="reminderMessageTypeSection" style="display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
+                            <label style="font-weight: 600; margin-bottom: 8px; display: block;">Loại thông điệp nhắc nhở khách hàng:</label>
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                                <label style="display: flex; align-items: center; gap: 6px;">
+                                    <input type="checkbox" id="reminderViaEmail" checked>
+                                    <span>Email</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 6px;">
+                                    <input type="checkbox" id="reminderViaSMS">
+                                    <span>SMS</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 6px;">
+                                    <input type="checkbox" id="reminderViaZalo">
+                                    <span>Zalo</span>
+                                </label>
+                            </div>
+                            <small style="color: #64748b; display: block; margin-top: 8px;">
+                                <i class="fas fa-info-circle"></i> Thông điệp sẽ được gửi tự động trước 1 ngày và 30 phút
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="appointmentNotes">Ghi chú</label>
+                        <textarea id="appointmentNotes" style="min-height: 80px;"></textarea>
+                    </div>
+                </div>
+                
+                <div class="form-actions" style="padding: 15px 20px; border-top: 1px solid #e2e8f0;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('appointmentModal')">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Tạo Lịch hẹn</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal xem chi tiết lịch hẹn -->
+    <div id="appointmentDetailModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2>Chi tiết Lịch hẹn</h2>
+                <button class="close-btn" onclick="closeModal('appointmentDetailModal')">&times;</button>
+            </div>
+            <div style="padding: 20px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <div>
+                        <p><strong>Khách hàng:</strong></p>
+                        <p id="detailAppointmentCustomer" style="color: #0f172a; font-size: 16px; margin-bottom: 15px;"></p>
+                        
+                        <p><strong>Tiêu đề:</strong></p>
+                        <p id="detailAppointmentTitle" style="color: #334155; margin-bottom: 15px;"></p>
+                        
+                        <p><strong>Loại:</strong></p>
+                        <p id="detailAppointmentType" style="color: #334155; margin-bottom: 15px;"></p>
+                        
+                        <div id="detailAppointmentLocationSection" style="display: none;">
+                            <p><strong>Địa điểm / Link:</strong></p>
+                            <p id="detailAppointmentLocation" style="color: #334155; margin-bottom: 15px; word-break: break-all;"></p>
+                        </div>
+                    </div>
+                    <div>
+                        <p><strong>Ngày/Giờ:</strong></p>
+                        <p id="detailAppointmentDateTime" style="color: #2B4856; font-weight: 600; font-size: 16px; margin-bottom: 15px;"></p>
+                        
+                        <p><strong>Nhắc nhở:</strong></p>
+                        <p id="detailAppointmentReminder" style="color: #334155; margin-bottom: 15px;"></p>
+                        
+                        <p><strong>Trạng thái:</strong></p>
+                        <p id="detailAppointmentStatus" style="margin-bottom: 15px;"></p>
+                        
+                        <div id="detailReminderMessageTypesSection" style="display: none;">
+                            <p><strong>Loại thông điệp nhắc nhở:</strong></p>
+                            <p id="detailReminderMessageTypes" style="color: #334155; margin-bottom: 15px;"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <p><strong>Ghi chú:</strong></p>
+                    <p id="detailAppointmentNotes" style="color: #334155;"></p>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('appointmentDetailModal')">Đóng</button>
+                    <button type="button" class="btn btn-primary" onclick="editAppointmentFromDetail()">Chỉnh sửa</button>
+                    <button type="button" class="btn btn-primary" onclick="completeAppointment()">Hoàn thành & Nhập Kết quả</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal nhập kết quả cuộc hẹn -->
+    <div id="appointmentResultModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>Nhập Kết quả Cuộc hẹn</h2>
+                <button class="close-btn" onclick="closeModal('appointmentResultModal')">&times;</button>
+            </div>
+            <form id="appointmentResultForm" onsubmit="saveAppointmentResult(event)">
+                <div style="padding: 20px;">
+                    <div class="form-group">
+                        <label for="appointmentResult">Kết quả *</label>
+                        <select id="appointmentResult" required>
+                            <option value="success">Thành công</option>
+                            <option value="busy">Khách bận</option>
+                            <option value="rejected">Khách từ chối</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="appointmentResultNotes">Ghi chú chi tiết *</label>
+                        <textarea id="appointmentResultNotes" required style="min-height: 120px;" placeholder="Mô tả chi tiết kết quả cuộc hẹn..."></textarea>
+                    </div>
+                    
+                    <div style="background: #f1f5f9; padding: 15px; border-radius: 8px;">
+                        <p style="font-size: 13px; color: #334155;"><i class="fas fa-info-circle"></i> Thông tin này sẽ được tự động ghi vào lịch sử tương tác của khách hàng</p>
+                    </div>
+                </div>
+                
+                <div class="form-actions" style="padding: 15px 20px; border-top: 1px solid #e2e8f0;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('appointmentResultModal')">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu Kết quả</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal gộp khách hàng trùng lặp -->
+    <div id="mergeCustomerModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2>Gộp Khách hàng Trùng lặp</h2>
+                <button class="close-btn" onclick="closeModal('mergeCustomerModal')">&times;</button>
+            </div>
+            <div style="padding: 20px;">
+                <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <p><i class="fas fa-exclamation-triangle"></i> <strong>Cảnh báo:</strong> Hành động này không thể hoàn tác. Tất cả tương tác của khách hàng 2 sẽ được gộp vào khách hàng 1.</p>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <div style="border: 2px solid #2B4856; padding: 15px; border-radius: 8px; background: #f0f9ff;">
+                        <h4 style="margin-bottom: 10px; color: #2B4856;">Khách hàng 1 (Giữ lại)</h4>
+                        <p id="mergeCustomer1Name"><strong>Tên:</strong> </p>
+                        <p id="mergeCustomer1Email"><strong>Email:</strong> </p>
+                        <p id="mergeCustomer1Phone"><strong>SĐT:</strong> </p>
+                        <p id="mergeCustomer1Interactions"><strong>Tương tác:</strong> </p>
+                    </div>
+                    <div style="border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; background: #f8fafc;">
+                        <h4 style="margin-bottom: 10px; color: #334155;">Khách hàng 2 (Sẽ xóa)</h4>
+                        <p id="mergeCustomer2Name"><strong>Tên:</strong> </p>
+                        <p id="mergeCustomer2Email"><strong>Email:</strong> </p>
+                        <p id="mergeCustomer2Phone"><strong>SĐT:</strong> </p>
+                        <p id="mergeCustomer2Interactions"><strong>Tương tác:</strong> </p>
+                    </div>
+                </div>
+                
+                <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <p><strong>Hành động:</strong></p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>Gộp tất cả tương tác của khách hàng 2 vào khách hàng 1</li>
+                        <li>Xóa khách hàng 2 khỏi hệ thống</li>
+                        <li>Cập nhật lịch sử tương tác</li>
+                    </ul>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('mergeCustomerModal')">Hủy</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmMergeCustomers()">Xác nhận Gộp</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal gán khách hàng cho chiến dịch -->
+    <div id="assignCustomersModal" class="modal">
+        <div class="modal-content" style="max-width: 900px; max-height: 90vh;">
+            <div class="modal-header">
+                <h2>Gán Khách hàng cho Chiến dịch</h2>
+                <button class="close-btn" onclick="closeModal('assignCustomersModal')">&times;</button>
+            </div>
+            <div id="assignCustomersContent" style="padding: 20px; overflow-y: auto; max-height: calc(90vh - 120px);">
+                <!-- Nội dung sẽ được load động -->
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/data.js"></script>
+    <script src="../js/script.js"></script>
+    <script src="../js/campaign-metrics.js"></script>
+    <script src="../js/financial-integration.js"></script>
+    <script src="../js/reports-employees.js"></script>
+    <script src="../js/settings-handlers.js"></script>
+    <!-- <script src="../js/dashboard-integration.js"></script> DISABLED - Conflicts with script.js -->
+    <script>
+        // Test if elements exist
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded');
+            console.log('meetingLocationSection exists:', !!document.getElementById('meetingLocationSection'));
+            console.log('reminderMessageTypeSection exists:', !!document.getElementById('reminderMessageTypeSection'));
+        });
+        
+        function switchTab(tabName) {
+            const tabs = document.querySelectorAll('.tab-content');
+            const buttons = document.querySelectorAll('.tab-btn');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        function updateAssignUI() {
+            const method = document.getElementById('assignMethod').value;
+            document.getElementById('assignManual').style.display = method === 'manual' ? 'block' : 'none';
+            document.getElementById('assignRoundRobin').style.display = method === 'round_robin' ? 'block' : 'none';
+            document.getElementById('assignRatio').style.display = method === 'ratio' ? 'block' : 'none';
+        }
+    </script>
+    
+    <!-- Modal Thông báo -->
+    <div id="notificationModal" class="modal">
+        <div class="modal-content" style="max-width: 600px; max-height: 80vh;">
+            <div class="modal-header">
+                <h2>Thông báo</h2>
+                <button class="close-btn" onclick="closeModal('notificationModal')">&times;</button>
+            </div>
+            <div id="notificationList" style="max-height: 500px; overflow-y: auto;">
+                <!-- Notifications will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+</body>
+</html>

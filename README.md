@@ -7,7 +7,7 @@ Hệ thống quản lý khách hàng cho bộ phận marketing công ty phần m
 |----------------------|----------------|------------ |
 | Nguyễn Hoàng Anh Thư | 23110503122240 | Trưởng nhóm |
 | Trần Minh Chiến      | 23115053122206 | Thành viên  |
-| Cao Thị Thu Diệu     | 23115053121    | Thành viên  |
+| Cao Thị Thu Diệu     | 23115053122106 | Thành viên  |
 | Phan Gia Hải         | 23115141122103 | Thành viên  |
 
 ## Công nghệ sử dụng
