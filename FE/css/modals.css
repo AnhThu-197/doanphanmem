@@ -1,0 +1,339 @@
+/* =============================================
+   MODALS - Nhóm 8 CRM
+   ============================================= */
+
+/* Modal overlay */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    overflow: auto;
+    animation: fadeIn 0.2s ease;
+}
+
+.modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Modal content */
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e2e8f0;
+    background: linear-gradient(135deg, #2B4856 0%, #3d5a6b 100%);
+    color: white;
+    border-radius: 12px 12px 0 0;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.3s;
+}
+
+.close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Form inside modal */
+.modal-content form {
+    padding: 20px;
+}
+
+.modal-content .form-group {
+    margin-bottom: 15px;
+}
+
+.modal-content .form-group label {
+    display: block;
+    margin-bottom: 6px;
+    color: #334155;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.modal-content .form-group input,
+.modal-content .form-group select,
+.modal-content .form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 13px;
+    transition: all 0.3s;
+    background: #f8fafc;
+}
+
+.modal-content .form-group input:focus,
+.modal-content .form-group select:focus,
+.modal-content .form-group textarea:focus {
+    outline: none;
+    border-color: #2B4856;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(43, 72, 86, 0.1);
+}
+
+.modal-content .form-group textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+/* Form actions */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 15px;
+    border-top: 1px solid #e2e8f0;
+    margin-top: 15px;
+}
+
+/* Grid layouts in modals */
+.modal-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+/* Trial info box */
+.trial-info-box {
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+}
+
+.trial-info-box h4 {
+    margin: 0 0 10px 0;
+    color: #475569;
+}
+
+/* File upload */
+.file-upload-wrapper {
+    position: relative;
+}
+
+.file-input {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+}
+
+.file-upload-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    border: 2px dashed #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+    color: #64748b;
+}
+
+.file-upload-label:hover {
+    border-color: #2B4856;
+    background: #f0f9ff;
+}
+
+.file-upload-label i {
+    font-size: 24px;
+    margin-bottom: 8px;
+    color: #2B4856;
+}
+
+.file-upload-hint {
+    display: block;
+    margin-top: 8px;
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+/* Tabs in modals */
+.tabs {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 0;
+}
+
+.tab-btn {
+    padding: 10px 20px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.3s;
+}
+
+.tab-btn:hover {
+    color: #2B4856;
+}
+
+.tab-btn.active {
+    color: #2B4856;
+    border-bottom-color: #2B4856;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Warning/Info boxes */
+.info-box {
+    background: #dbeafe;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #3b82f6;
+    margin-bottom: 15px;
+}
+
+.warning-box {
+    background: #fef3c7;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #f59e0b;
+    margin-bottom: 15px;
+}
+
+.success-box {
+    background: #dcfce7;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #10b981;
+    margin-bottom: 15px;
+}
+
+/* Promo section in send message */
+.promo-section {
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.promo-section h4 {
+    margin-bottom: 10px;
+    color: #334155;
+}
+
+/* Send options section */
+.send-options-section {
+    background: #f1f5f9;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.send-options-section h4 {
+    margin-bottom: 10px;
+    color: #334155;
+}
+
+/* Reminder section */
+.reminder-section {
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.reminder-section h4 {
+    margin-bottom: 10px;
+    color: #334155;
+}
+
+/* Notification modal */
+#notificationList {
+    padding: 15px;
+}
+
+.notification-item {
+    padding: 12px 15px;
+    border-bottom: 1px solid #e2e8f0;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.notification-item:hover {
+    background: #f8fafc;
+}
+
+.notification-item:last-child {
+    border-bottom: none;
+}
+
+.notification-item.unread {
+    background: #eff6ff;
+    border-left: 3px solid #3b82f6;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        max-height: 90vh;
+    }
+
+    .modal-grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
