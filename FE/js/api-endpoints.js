@@ -7,6 +7,10 @@ const API_ENDPOINTS = {
         resetPassword: '/auth/dat-lai-mat-khau'
     },
 
+    profile: {
+        me: '/profile/me'
+    },
+
     khachHang: {
         list: '/khach-hang',
         detail: (id) => `/khach-hang/${id}`,

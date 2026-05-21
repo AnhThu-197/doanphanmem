@@ -340,13 +340,13 @@
             </div>
             
             <div class="demo-users">
-                <button type="button" class="demo-btn" onclick="demoLogin('nhanvien', '123')">
+                <button type="button" class="demo-btn" onclick="demoLogin('nv01@crm.vn', 'nv01123')">
                     <i class="fas fa-user"></i> Nhân viên Marketing
                 </button>
-                <button type="button" class="demo-btn" onclick="demoLogin('truongphong', '123')">
+                <button type="button" class="demo-btn" onclick="demoLogin('anhthu@gmail.com', 'tp123')">
                     <i class="fas fa-user-tie"></i> Trưởng phòng Marketing
                 </button>
-                <button type="button" class="demo-btn" onclick="demoLogin('admin', '123')">
+                <button type="button" class="demo-btn" onclick="demoLogin('admin@gmail.com', 'admin123')">
                     <i class="fas fa-user-shield"></i> Quản trị viên
                 </button>
             </div>
@@ -463,6 +463,10 @@
         </div>
     </div>
 
+    <script src="../js/api-config.js"></script>
+    <script src="../js/api-endpoints.js"></script>
+    <script src="../js/api-client.js"></script>
+    <script src="../js/api-services.js"></script>
     <script src="../js/auth.js"></script>
     <script>
         document.getElementById('loginForm').addEventListener('submit', function(e) {
@@ -478,14 +482,28 @@
             performLogin(username, password);
         }
         
-        function performLogin(username, password) {
-            const result = AUTH.login(username, password);
+        async function performLogin(username, password) {
+            const loginBtn = document.querySelector('.login-btn');
+            const errorMsg = document.getElementById('errorMsg');
+
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang đăng nhập...';
+            errorMsg.style.display = 'none';
+
+            let result = await AUTH.loginApi(username, password);
+
+            // Fallback cho tài khoản demo mock cũ nếu BE chưa có user tương ứng.
+            if (!result.success) {
+                result = AUTH.login(username, password);
+            }
+
             if (result.success) {
                 window.location.href = 'dashboard.html';
             } else {
-                const errorMsg = document.getElementById('errorMsg');
                 errorMsg.textContent = result.message;
                 errorMsg.style.display = 'block';
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Đăng nhập';
             }
         }
         

@@ -11,6 +11,11 @@ const API_SERVICES = {
             API_CLIENT.post(API_ENDPOINTS.auth.resetPassword, { email, otp, matKhauMoi })
     },
 
+    profile: {
+        me: () =>
+            API_CLIENT.get(API_ENDPOINTS.profile.me)
+    },
+
     khachHang: {
         list: () =>
             API_CLIENT.get(API_ENDPOINTS.khachHang.list),
