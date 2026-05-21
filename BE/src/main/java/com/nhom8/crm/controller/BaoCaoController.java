@@ -53,7 +53,7 @@ public class BaoCaoController {
 
     @GetMapping("/chien-dich/{id}/roi")
     @Operation(summary = "Tính ROI của chiến dịch")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TRƯỞNG_PHÒNG')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> roiChienDich(
             @PathVariable Integer id) {
         BigDecimal tongChiPhi = chiPhiRepository.sumByChienDich(id);

@@ -44,7 +44,7 @@ public class ChienDichController {
 
     @PostMapping
     @Operation(summary = "Tạo chiến dịch mới")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TRƯỞNG_PHÒNG')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<ApiResponse<ChienDich>> create(
             @Valid @RequestBody ChienDichRequest request) {
         ChienDich cd = buildFromRequest(new ChienDich(), request);
@@ -55,7 +55,7 @@ public class ChienDichController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Cập nhật chiến dịch")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TRƯỞNG_PHÒNG')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<ApiResponse<ChienDich>> update(
             @PathVariable Integer id,
             @Valid @RequestBody ChienDichRequest request) {
@@ -69,7 +69,7 @@ public class ChienDichController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Xóa chiến dịch")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TRƯỞNG_PHÒNG')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Integer id) {
         ChienDich cd = chienDichRepository.findById(id)
                 .filter(c -> !c.getDaXoa())

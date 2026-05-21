@@ -62,7 +62,7 @@ public class SecurityConfig {
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/nhan-vien/**").hasRole("ADMIN")
                 // Manager + Admin
-                .requestMatchers("/bao-cao/**").hasAnyRole("ADMIN", "TRƯỞNG_PHÒNG")
+                .requestMatchers("/bao-cao/**").hasAnyRole("ADMIN", "MANAGER")
                 // All authenticated users
                 .anyRequest().authenticated()
             )

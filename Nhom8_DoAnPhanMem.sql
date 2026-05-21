@@ -494,9 +494,9 @@ CREATE TABLE LichSuXuatDuLieu (
 
 -- Dữ liệu Vai Trò
 INSERT INTO VaiTro (tenVaiTro, moTa) VALUES
-    (N'Admin',               N'Quản trị viên hệ thống'),
-    (N'Trưởng phòng',        N'Trưởng phòng Marketing'),
-    (N'Nhân viên Marketing', N'Nhân viên Marketing');
+    (N'ADMIN',    N'Quản trị viên hệ thống'),
+    (N'MANAGER',  N'Trưởng phòng Marketing'),
+    (N'EMPLOYEE', N'Nhân viên Marketing');
 
 -- Dữ liệu Tỉnh Thành
 INSERT INTO TinhThanh (tenTinhThanh, loai) VALUES
@@ -528,10 +528,10 @@ INSERT INTO NguonKhachHang (tenNguon, moTa, loaiNguon) VALUES
 
 -- Dữ liệu Tài Khoản & Nhân Viên
 INSERT INTO TaiKhoan (maVaiTro, email, matKhau, trangThai) VALUES
-    (1, 'admin@gmail.com',  'admin123',  N'Hoạt động'),
-    (2, 'anhthu@gmail.com', 'tp123',     N'Hoạt động'),
-    (3, 'nv01@crm.vn',		'nv01123',   N'Hoạt động'),
-    (3, 'nv02@crm.vn',		'nv02123',   N'Hoạt động');
+    (1, 'admin@gmail.com',  '$2a$10$BC.NFoDH3Kc39VaNL/w1T.a.s4uu27vhY.GtEIbTrYgviGCQXvlya', N'Hoạt động'),
+    (2, 'anhthu@gmail.com', '$2a$10$5UPARL4zd7gt5E9dh3k29O8W/VOuCC4vlbLZB/WYzVYtX3Gp0a0ZK', N'Hoạt động'),
+    (3, 'nv01@crm.vn',      '$2a$10$V0ERJCZ5a7Sdd.qtDdUTkemI1a9lHnHI.8HZbu7pJMKgDRe9suVQC', N'Hoạt động'),
+    (3, 'nv02@crm.vn',      '$2a$10$q4PJYjZKXo4S1k6xbKXCTeaw1UaL/RB7gsdIQMmOio.zcjGy0QYeu', N'Hoạt động');
 
 INSERT INTO NhanVien (maTaiKhoan, hoTen, soDienThoai, chucVu, maPhuongXa) VALUES
     (1, N'Admin',     '0901000001', N'Quản trị viên', 1),

@@ -79,7 +79,7 @@ public class KhachHangController {
 
     @PostMapping("/{id}/khoi-phuc")
     @Operation(summary = "Khôi phục khách hàng từ thùng rác")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TRƯỞNG_PHÒNG')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<ApiResponse<Void>> restore(@PathVariable Integer id) {
         khachHangService.restore(id);
         return ResponseEntity.ok(ApiResponse.ok("Khôi phục thành công", null));

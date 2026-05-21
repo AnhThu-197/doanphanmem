@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.Normalizer;
 import java.util.List;
 
 @Service
@@ -21,16 +22,44 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         TaiKhoan taiKhoan = taiKhoanRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException(
-                        "Không tìm thấy tài khoản với email: " + email));
+                        "Khong tim thay tai khoan voi email: " + email));
 
         return User.builder()
                 .username(taiKhoan.getEmail())
                 .password(taiKhoan.getMatKhau())
                 .authorities(List.of(new SimpleGrantedAuthority(
-                        "ROLE_" + taiKhoan.getVaiTro().getTenVaiTro().toUpperCase()
-                                .replace(" ", "_"))))
-                .accountLocked("Bị khóa".equals(taiKhoan.getTrangThai()))
-                .disabled(!"Hoạt động".equals(taiKhoan.getTrangThai()))
+                        "ROLE_" + normalizeRole(taiKhoan.getVaiTro().getTenVaiTro()))))
+                .accountLocked(isLocked(taiKhoan.getTrangThai()))
+                .disabled(!isActive(taiKhoan.getTrangThai()))
                 .build();
     }
+
+    private String normalizeRole(String roleName) {
+        if (roleName == null) return "EMPLOYEE";
+
+        String role = removeAccent(roleName).trim().toUpperCase();
+        if ("ADMIN".equals(role) || role.contains("ADMIN") || role.contains("QUAN TRI")) {
+            return "ADMIN";
+        }
+        if ("MANAGER".equals(role) || role.contains("TRUONG")) {
+            return "MANAGER";
+        }
+        return "EMPLOYEE";
+    }
+
+    private String removeAccent(String value) {
+        String normalized = Normalizer.normalize(value, Normalizer.Form.NFD);
+        return normalized.replaceAll("\\p{M}", "")
+                .replace('\u0110', 'D')
+                .replace('\u0111', 'd');
+    }
+
+    private boolean isActive(String status) {
+        return "Ho\u1ea1t \u0111\u1ed9ng".equals(status);
+    }
+
+    private boolean isLocked(String status) {
+        return "B\u1ecb kh\u00f3a".equals(status);
+    }
 }
+

@@ -39,7 +39,7 @@ public class TaiKhoan {
 
     @Column(name = "trangThai", nullable = false, length = 20)
     @Builder.Default
-    private String trangThai = "Hoạt động";
+    private String trangThai = "Ho\u1ea1t \u0111\u1ed9ng";
 
     @Column(name = "ngayTao")
     private LocalDateTime ngayTao;
@@ -61,3 +61,4 @@ public class TaiKhoan {
         ngayCapNhat = LocalDateTime.now();
     }
 }
+
