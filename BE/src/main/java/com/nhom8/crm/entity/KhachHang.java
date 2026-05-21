@@ -34,10 +34,10 @@ public class KhachHang {
     @Column(name = "hoTen", nullable = false, length = 100)
     private String hoTen;
 
-    @Column(name = "email", nullable = false, unique = true, length = 150)
+    @Column(name = "email", nullable = false, length = 150)
     private String email;
 
-    @Column(name = "soDienThoai", nullable = false, unique = true, length = 15)
+    @Column(name = "soDienThoai", nullable = false, length = 15)
     private String soDienThoai;
 
     @Column(name = "gioiTinh", length = 10)

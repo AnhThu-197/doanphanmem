@@ -1,10 +1,13 @@
 package com.nhom8.crm.dto.request;
 
 import jakarta.validation.constraints.*;
-import lombok.Data;
+import lombok.*;
 import java.time.LocalDate;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class KhachHangRequest {
 
     @NotBlank(message = "Họ tên không được để trống")

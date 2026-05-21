@@ -24,6 +24,9 @@ public class KhachHangService {
     private final NguonKhachHangRepository nguonKhachHangRepository;
     private final PhuongXaRepository phuongXaRepository;
 
+    @jakarta.persistence.PersistenceContext
+    private jakarta.persistence.EntityManager entityManager;
+
     public List<KhachHangResponse> getAll() {
         return khachHangRepository.findByDaXoaFalse()
                 .stream().map(this::toResponse).collect(Collectors.toList());
@@ -43,17 +46,50 @@ public class KhachHangService {
 
     @Transactional
     public KhachHangResponse create(KhachHangRequest request) {
-        // Kiểm tra trùng email
-        if (khachHangRepository.findByEmailAndDaXoaFalse(request.getEmail()).isPresent()) {
-            throw new BadRequestException("Email đã tồn tại trong hệ thống");
+        String email = request.getEmail() != null ? request.getEmail().trim() : "";
+        String phone = request.getSoDienThoai() != null ? request.getSoDienThoai().trim() : "";
+
+        List<KhachHang> duplicatesByEmail = khachHangRepository.findByEmailAndDaXoaFalse(email);
+        List<KhachHang> duplicatesByPhone = khachHangRepository.findBySoDienThoaiAndDaXoaFalse(phone);
+
+        List<KhachHang> duplicateCandidates = new java.util.ArrayList<>();
+        for (KhachHang kh : duplicatesByEmail) {
+            if (kh.getMaKhachHang() != null) duplicateCandidates.add(kh);
         }
-        // Kiểm tra trùng SĐT
-        if (khachHangRepository.findBySoDienThoaiAndDaXoaFalse(request.getSoDienThoai()).isPresent()) {
-            throw new BadRequestException("Số điện thoại đã tồn tại trong hệ thống");
+        for (KhachHang kh : duplicatesByPhone) {
+            boolean alreadyAdded = false;
+            for (KhachHang c : duplicateCandidates) {
+                if (c.getMaKhachHang().equals(kh.getMaKhachHang())) {
+                    alreadyAdded = true;
+                    break;
+                }
+            }
+            if (!alreadyAdded && kh.getMaKhachHang() != null) {
+                duplicateCandidates.add(kh);
+            }
+        }
+
+        KhachHang completeMatch = null;
+        for (KhachHang candidate : duplicateCandidates) {
+            boolean nameMatch = candidate.getHoTen().trim().equalsIgnoreCase(request.getHoTen().trim());
+            boolean emailMatch = candidate.getEmail().trim().equalsIgnoreCase(email);
+            boolean phoneMatch = candidate.getSoDienThoai().trim().equals(phone);
+
+            if (nameMatch && emailMatch && phoneMatch) {
+                completeMatch = candidate;
+                break;
+            }
+        }
+
+        if (completeMatch != null) {
+            mergeEmptyFields(completeMatch, request);
+            return toResponse(khachHangRepository.save(completeMatch));
         }
 
         KhachHang kh = buildFromRequest(new KhachHang(), request);
-        return toResponse(khachHangRepository.save(kh));
+        KhachHang savedKh = khachHangRepository.save(kh);
+
+        return toResponse(savedKh);
     }
 
     @Transactional
@@ -62,16 +98,10 @@ public class KhachHangService {
                 .filter(k -> !k.getDaXoa())
                 .orElseThrow(() -> new ResourceNotFoundException("Khách hàng", id));
 
-        // Kiểm tra trùng email (ngoại trừ chính nó)
-        khachHangRepository.findByEmailAndDaXoaFalse(request.getEmail())
-                .ifPresent(existing -> {
-                    if (!existing.getMaKhachHang().equals(id)) {
-                        throw new BadRequestException("Email đã tồn tại trong hệ thống");
-                    }
-                });
-
         buildFromRequest(kh, request);
-        return toResponse(khachHangRepository.save(kh));
+        KhachHang savedKh = khachHangRepository.save(kh);
+
+        return toResponse(savedKh);
     }
 
     @Transactional
@@ -99,6 +129,153 @@ public class KhachHangService {
     public List<KhachHangResponse> getTrash() {
         return khachHangRepository.findByDaXoaTrue()
                 .stream().map(this::toResponse).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void mergeCustomers(Integer keepId, Integer removeId) {
+        KhachHang khKeep = khachHangRepository.findById(keepId)
+                .filter(k -> !k.getDaXoa())
+                .orElseThrow(() -> new ResourceNotFoundException("Khách hàng giữ lại", keepId));
+
+        KhachHang khRemove = khachHangRepository.findById(removeId)
+                .filter(k -> !k.getDaXoa())
+                .orElseThrow(() -> new ResourceNotFoundException("Khách hàng xóa bỏ", removeId));
+
+        entityManager.createNativeQuery("DELETE FROM GanThe_KhachHang WHERE maKhachHang = :removeId AND maThe IN (SELECT maThe FROM GanThe_KhachHang WHERE maKhachHang = :keepId)")
+                .setParameter("removeId", removeId)
+                .setParameter("keepId", keepId)
+                .executeUpdate();
+        entityManager.createNativeQuery("UPDATE GanThe_KhachHang SET maKhachHang = :keepId WHERE maKhachHang = :removeId")
+                .setParameter("removeId", removeId)
+                .setParameter("keepId", keepId)
+                .executeUpdate();
+
+        entityManager.createNativeQuery("DELETE FROM KhachHang_ChienDich WHERE maKhachHang = :removeId AND maChienDich IN (SELECT maChienDich FROM KhachHang_ChienDich WHERE maKhachHang = :keepId)")
+                .setParameter("removeId", removeId)
+                .setParameter("keepId", keepId)
+                .executeUpdate();
+        entityManager.createNativeQuery("UPDATE KhachHang_ChienDich SET maKhachHang = :keepId WHERE maKhachHang = :removeId")
+                .setParameter("removeId", removeId)
+                .setParameter("keepId", keepId)
+                .executeUpdate();
+
+        entityManager.createNativeQuery("UPDATE LichSuTrangThaiKhachHang SET maKhachHang = :keepId WHERE maKhachHang = :removeId")
+                .setParameter("removeId", removeId)
+                .setParameter("keepId", keepId)
+                .executeUpdate();
+
+        entityManager.createNativeQuery("UPDATE LichSuTuongTac SET maKhachHang = :keepId WHERE maKhachHang = :removeId")
+                .setParameter("removeId", removeId)
+                .setParameter("keepId", keepId)
+                .executeUpdate();
+
+        entityManager.createNativeQuery("UPDATE NhacNho SET maKhachHang = :keepId WHERE maKhachHang = :removeId")
+                .setParameter("removeId", removeId)
+                .setParameter("keepId", keepId)
+                .executeUpdate();
+
+        entityManager.createNativeQuery("UPDATE HopDong_GiaoDich SET maKhachHang = :keepId WHERE maKhachHang = :removeId")
+                .setParameter("removeId", removeId)
+                .setParameter("keepId", keepId)
+                .executeUpdate();
+
+        entityManager.createNativeQuery("UPDATE LichSuGuiThongDiep SET maKhachHang = :keepId WHERE maKhachHang = :removeId")
+                .setParameter("removeId", removeId)
+                .setParameter("keepId", keepId)
+                .executeUpdate();
+
+        entityManager.createNativeQuery("UPDATE LichSuThucThiQuyTac SET maKhachHang = :keepId WHERE maKhachHang = :removeId")
+                .setParameter("removeId", removeId)
+                .setParameter("keepId", keepId)
+                .executeUpdate();
+
+        KhachHangRequest tempReq = KhachHangRequest.builder()
+                .gioiTinh(khRemove.getGioiTinh())
+                .ngaySinh(khRemove.getNgaySinh())
+                .congTy(khRemove.getCongTy())
+                .chucVuTaiCongTy(khRemove.getChucVuTaiCongTy())
+                .websiteCongTy(khRemove.getWebsiteCongTy())
+                .diaChiChiTiet(khRemove.getDiaChiChiTiet())
+                .maNguoiPhuTrach(khRemove.getNguoiPhuTrach() != null ? khRemove.getNguoiPhuTrach().getMaNhanVien() : null)
+                .maNganhNghe(khRemove.getNganhNghe() != null ? khRemove.getNganhNghe().getMaNganhNghe() : null)
+                .maNguonKH(khRemove.getNguonKhachHang() != null ? khRemove.getNguonKhachHang().getMaNguon() : null)
+                .maPhuongXa(khRemove.getPhuongXa() != null ? khRemove.getPhuongXa().getMaPhuongXa() : null)
+                .build();
+        mergeEmptyFields(khKeep, tempReq);
+        khachHangRepository.save(khKeep);
+
+        khRemove.setDaXoa(true);
+        khRemove.setLyDoXoa("Đã gộp vào khách hàng ID: " + keepId + " (" + khKeep.getHoTen() + ")");
+        khRemove.setNgayXoa(LocalDateTime.now());
+        khachHangRepository.save(khRemove);
+    }
+
+    public int calculateSimilarity(String s1, String s2) {
+        if (s1 == null || s2 == null) return 0;
+        s1 = s1.trim().toLowerCase();
+        s2 = s2.trim().toLowerCase();
+        if (s1.equals(s2)) return 100;
+
+        int editDistance = editDistance(s1, s2);
+        double ratio = 1.0 - ((double) editDistance / Math.max(s1.length(), s2.length()));
+        int percentage = (int) Math.round(ratio * 100);
+        return Math.max(50, percentage);
+    }
+
+    private int editDistance(String s1, String s2) {
+        int[] costs = new int[s2.length() + 1];
+        for (int i = 0; i <= s1.length(); i++) {
+            int lastValue = i;
+            for (int j = 0; j <= s2.length(); j++) {
+                if (i == 0) {
+                    costs[j] = j;
+                } else {
+                    if (j > 0) {
+                        int newValue = costs[j - 1];
+                        if (s1.charAt(i - 1) != s2.charAt(j - 1)) {
+                            newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                        }
+                        costs[j - 1] = lastValue;
+                        lastValue = newValue;
+                    }
+                }
+            }
+            if (i > 0) costs[s2.length()] = lastValue;
+        }
+        return costs[s2.length()];
+    }
+
+    private void mergeEmptyFields(KhachHang target, KhachHangRequest src) {
+        if ((target.getGioiTinh() == null || target.getGioiTinh().isEmpty()) && src.getGioiTinh() != null) {
+            target.setGioiTinh(src.getGioiTinh());
+        }
+        if (target.getNgaySinh() == null && src.getNgaySinh() != null) {
+            target.setNgaySinh(src.getNgaySinh());
+        }
+        if ((target.getCongTy() == null || target.getCongTy().isEmpty()) && src.getCongTy() != null) {
+            target.setCongTy(src.getCongTy());
+        }
+        if ((target.getChucVuTaiCongTy() == null || target.getChucVuTaiCongTy().isEmpty()) && src.getChucVuTaiCongTy() != null) {
+            target.setChucVuTaiCongTy(src.getChucVuTaiCongTy());
+        }
+        if ((target.getWebsiteCongTy() == null || target.getWebsiteCongTy().isEmpty()) && src.getWebsiteCongTy() != null) {
+            target.setWebsiteCongTy(src.getWebsiteCongTy());
+        }
+        if ((target.getDiaChiChiTiet() == null || target.getDiaChiChiTiet().isEmpty()) && src.getDiaChiChiTiet() != null) {
+            target.setDiaChiChiTiet(src.getDiaChiChiTiet());
+        }
+        if (target.getNguoiPhuTrach() == null && src.getMaNguoiPhuTrach() != null) {
+            target.setNguoiPhuTrach(nhanVienRepository.findById(src.getMaNguoiPhuTrach()).orElse(null));
+        }
+        if (target.getNganhNghe() == null && src.getMaNganhNghe() != null) {
+            target.setNganhNghe(nganhNgheRepository.findById(src.getMaNganhNghe()).orElse(null));
+        }
+        if (target.getNguonKhachHang() == null && src.getMaNguonKH() != null) {
+            target.setNguonKhachHang(nguonKhachHangRepository.findById(src.getMaNguonKH()).orElse(null));
+        }
+        if (target.getPhuongXa() == null && src.getMaPhuongXa() != null) {
+            target.setPhuongXa(phuongXaRepository.findById(src.getMaPhuongXa()).orElse(null));
+        }
     }
 
     // ---- Helper methods ----

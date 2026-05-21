@@ -1,4 +1,4 @@
-﻿-- ================================================================
+-- ================================================================
 -- HỆ THỐNG QUẢN LÝ KHÁCH HÀNG - BỘ PHẬN MARKETING CÔNG TY PHẦN MỀM
 -- Nhóm 8 - Đồ Án Phần Mềm
 -- ================================================================
@@ -109,8 +109,8 @@ CREATE TABLE KhachHang (
     maNguonKH         INT NULL FOREIGN KEY REFERENCES NguonKhachHang(maNguon),
     maPhuongXa        INT NULL FOREIGN KEY REFERENCES PhuongXa(maPhuongXa),
     hoTen             NVARCHAR(100) NOT NULL,
-    email             VARCHAR(150) UNIQUE NOT NULL,
-    soDienThoai       VARCHAR(15) UNIQUE NOT NULL,
+    email             VARCHAR(150) NOT NULL,
+    soDienThoai       VARCHAR(15) NOT NULL,
     gioiTinh          NVARCHAR(10) NULL,
     ngaySinh          DATE NULL,
     congTy            NVARCHAR(150) NULL,

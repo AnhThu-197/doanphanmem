@@ -49,8 +49,8 @@ function loadCustomers() {
                             </select>
                         </div>
                         <div style="display:flex;gap:8px;">
-                            <button onclick="applyCustomerFilter()" style="flex:1;padding:8px 16px;background:#2B4856;color:white;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:13px;"><i class="fas fa-filter"></i> Lọc</button>
-                            <button onclick="resetCustomerFilter()" style="flex:1;padding:8px 16px;background:#e2e8f0;color:#334155;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:13px;"><i class="fas fa-redo"></i> Đặt lại</button>
+                            <button onclick="applyCustomerFilter()" class="btn btn-primary" style="flex:1;"><i class="fas fa-filter"></i> Lọc</button>
+                            <button onclick="resetCustomerFilter()" class="btn btn-secondary" style="flex:1;"><i class="fas fa-redo"></i> Đặt lại</button>
                         </div>
                     </div>
                 </div>

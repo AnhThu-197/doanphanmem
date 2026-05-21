@@ -92,5 +92,12 @@ const API_SERVICES = {
             API_CLIENT.patch(API_ENDPOINTS.adminUsers.unlock(id), {}),
         delete: (id) =>
             API_CLIENT.delete(API_ENDPOINTS.adminUsers.delete(id))
+    },
+
+    trungLap: {
+        list: () =>
+            API_CLIENT.get(API_ENDPOINTS.trungLap.list),
+        gop: (id) =>
+            API_CLIENT.post(API_ENDPOINTS.trungLap.gop(id))
     }
 };

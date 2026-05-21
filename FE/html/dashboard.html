@@ -17,23 +17,38 @@
         </div>
         <ul class="sidebar-menu">
             <li class="active" data-page="dashboard"><i class="fas fa-home"></i> Tổng quan</li>
-            <li data-page="customers"><i class="fas fa-users"></i> Quản lý khách hàng</li>
-            <li data-page="campaigns"><i class="fas fa-bullhorn"></i> Quản lý chiến dịch</li>
-            <li data-page="revenue-sync"><i class="fas fa-file-contract"></i> Hợp đồng - Giao dịch</li>
-            <li data-page="campaign-expenses"><i class="fas fa-money-bill-wave"></i> Chi phí Chiến dịch</li>
+
+            <div class="sidebar-divider"></div>
+
+            <li data-page="customers"><i class="fas fa-users"></i> Khách hàng</li>
+            <li data-page="campaigns"><i class="fas fa-bullhorn"></i> Chiến dịch</li>
+            <li data-page="campaign-expenses"><i class="fas fa-money-bill-wave"></i> Chi phí chiến dịch</li>
+            <li data-page="revenue-sync"><i class="fas fa-file-contract"></i> Hợp đồng & Giao dịch</li>
+
+            <div class="sidebar-divider"></div>
+
             <li data-page="send-message"><i class="fas fa-envelope"></i> Thông điệp</li>
-            <li data-page="trial-management"><i class="fas fa-hourglass-start"></i> Quản lý dùng thử</li>
-            <li data-page="automation"><i class="fas fa-robot"></i> Tự động hóa</li>
             <li data-page="smart-reminders"><i class="fas fa-bell"></i> Nhắc nhở</li>
+            <li data-page="automation"><i class="fas fa-robot"></i> Tự động hóa</li>
+            <li data-page="trial-management"><i class="fas fa-hourglass-start"></i> Dùng thử</li>
+
+            <div class="sidebar-divider"></div>
+
             <li data-page="merge-duplicates"><i class="fas fa-code-branch"></i> Gộp dữ liệu</li>
             <li data-page="api-sync"><i class="fas fa-sync-alt"></i> Đồng bộ API</li>
-            <li data-page="financial-sync"><i class="fas fa-dollar-sign"></i> Tích hợp Tài chính</li>
-            <li data-page="advanced"><i class="fas fa-star"></i> Chức năng nâng cao</li>
-            <li data-page="manage-employees"><i class="fas fa-user-tie"></i> Quản lý nhân viên</li>
+            <li data-page="financial-sync"><i class="fas fa-dollar-sign"></i> Tích hợp tài chính</li>
+            <li data-page="advanced"><i class="fas fa-star"></i> Nâng cao</li>
+
+            <div class="sidebar-divider"></div>
+
+            <li data-page="manage-employees"><i class="fas fa-user-tie"></i> Nhân viên</li>
             <li data-page="reports"><i class="fas fa-chart-pie"></i> Báo cáo & Thống kê</li>
+            <li data-page="user-management"><i class="fas fa-users-cog"></i> Người dùng</li>
             <li data-page="trash"><i class="fas fa-trash"></i> Thùng rác</li>
-            <li data-page="user-management"><i class="fas fa-users-cog"></i> Quản lý người dùng</li>
-            <li data-page="settings"><i class="fas fa-cog"></i> Cài đặt hệ thống</li>
+
+            <div class="sidebar-divider"></div>
+
+            <li data-page="settings"><i class="fas fa-cog"></i> Cài đặt</li>
             <li data-page="profile"><i class="fas fa-user"></i> Hồ sơ cá nhân</li>
         </ul>
     </div>
@@ -52,8 +67,8 @@
                 </div>
                 <div class="avatar" id="userAvatar" onclick="openProfileModal()" style="cursor: pointer;" title="Xem thông tin cá nhân">NV</div>
                 <div class="user-info">
-                    <strong id="userName">Trần Minh Chiến</strong><br>
-                    <small id="userRole" style="color: var(--text-light);">Nhân viên Marketing</small>
+                    <strong id="userName">Trần Minh Chiến</strong>
+                    <small id="userRole">Nhân viên Marketing</small>
                 </div>
                 <button onclick="logout()" style="background: none; border: none; cursor: pointer; color: #94a3b8; font-size: 18px;" title="Đăng xuất">
                     <i class="fas fa-sign-out-alt"></i>

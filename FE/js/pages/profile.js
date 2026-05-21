@@ -7,88 +7,151 @@ async function loadProfile() {
     let user = AUTH.getCurrentUser();
 
     mainContent.innerHTML = `
-        <h2 class="page-title">Hồ sơ Cá nhân</h2>
-        <div style="background: white; padding: 30px; border-radius: 8px; max-width: 900px; margin: 0 auto;">
-            <p style="color: #64748b;">Đang tải thông tin cá nhân...</p>
+        <div class="page-header">
+            <div>
+                <h1>Hồ sơ cá nhân</h1>
+                <p>Xem và cập nhật thông tin tài khoản của bạn.</p>
+            </div>
+        </div>
+        <div class="profile-layout">
+            <div class="profile-sidebar-card">
+                <p style="color: var(--text-muted); font-size: 13px;">Đang tải...</p>
+            </div>
+            <div class="profile-main-card">
+                <p style="color: var(--text-muted); font-size: 13px;">Đang tải...</p>
+            </div>
         </div>
     `;
 
     if (user && user.authSource === 'api') {
         const result = await AUTH.refreshProfile();
         if (!result.success) {
-            mainContent.innerHTML = `
-                <h2 class="page-title">Hồ sơ Cá nhân</h2>
-                <div style="background: #fee2e2; color: #991b1b; padding: 18px; border-radius: 8px;">${result.message}</div>
-            `;
+            mainContent.querySelector('.profile-sidebar-card').innerHTML =
+                `<p style="color: var(--danger-text); font-size: 13px;">${result.message}</p>`;
             return;
         }
         user = result.user;
     }
 
-    const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c =>
+        ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+    const initials = (user.name || 'U').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+    const roleLabel = getRoleLabel(user.role);
 
     mainContent.innerHTML = `
-        <h2 class="page-title">Hồ sơ Cá nhân</h2>
-        <div style="background: white; padding: 30px; border-radius: 8px; max-width: 900px; margin: 0 auto; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-            <form id="profilePageForm" onsubmit="saveProfilePage(event)">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div class="form-group">
-                        <label for="profilePageName">Họ và Tên *</label>
-                        <input type="text" id="profilePageName" value="${esc(user.name)}" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="profilePageEmail">Email *</label>
-                        <input type="email" id="profilePageEmail" value="${esc(user.email)}" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="profilePagePhone">Số điện thoại</label>
-                        <input type="tel" id="profilePagePhone" value="${esc(user.phone)}">
-                    </div>
-                    <div class="form-group">
-                        <label for="profilePageDepartment">Phòng ban</label>
-                        <input type="text" id="profilePageDepartment" value="${esc(user.department || 'Marketing')}" disabled>
-                    </div>
-                    <div class="form-group">
-                        <label for="profilePagePosition">Chức vụ</label>
-                        <input type="text" id="profilePagePosition" value="${esc(user.position)}" disabled>
-                    </div>
-                    <div class="form-group">
-                        <label for="profilePageRole">Vai trò</label>
-                        <input type="text" id="profilePageRole" value="${esc(getRoleLabel(user.role))}" disabled>
-                    </div>
-                    <div class="form-group">
-                        <label for="profilePageJoinDate">Ngày vào làm</label>
-                        <input type="text" id="profilePageJoinDate" value="${esc(user.joinDate)}" disabled>
-                    </div>
-                    <div class="form-group">
-                        <label for="profilePageBirthday">Ngày sinh</label>
-                        <input type="text" id="profilePageBirthday" value="${esc(user.birthday)}" disabled>
-                    </div>
-                    <div class="form-group">
-                        <label for="profilePageGender">Giới tính</label>
-                        <input type="text" id="profilePageGender" value="${esc(user.gender)}" disabled>
-                    </div>
-                    <div class="form-group">
-                        <label for="profilePageAddress">Địa chỉ</label>
-                        <input type="text" id="profilePageAddress" value="${esc(user.address)}" disabled>
-                    </div>
-                    <div class="form-group">
-                        <label for="profilePageWard">Phường/Xã</label>
-                        <input type="text" id="profilePageWard" value="${esc(user.ward)}" disabled>
-                    </div>
-                    <div class="form-group">
-                        <label for="profilePageProvince">Tỉnh/Thành phố</label>
-                        <input type="text" id="profilePageProvince" value="${esc(user.province)}" disabled>
-                    </div>
+        <div class="page-header">
+            <div>
+                <h1>Hồ sơ cá nhân</h1>
+                <p>Xem và cập nhật thông tin tài khoản của bạn.</p>
+            </div>
+        </div>
+
+        <div class="profile-layout">
+            <!-- Left: Avatar card -->
+            <div class="profile-sidebar-card">
+                <div class="profile-avatar-lg">${initials}</div>
+                <div class="profile-name">${esc(user.name)}</div>
+                <div class="profile-role-label">${roleLabel}</div>
+                ${user.department ? `<div class="profile-dept">${esc(user.department)}</div>` : ''}
+
+                <div class="profile-meta-list">
+                    ${user.email ? `
+                    <div class="profile-meta-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>${esc(user.email)}</span>
+                    </div>` : ''}
+                    ${user.phone ? `
+                    <div class="profile-meta-item">
+                        <i class="fas fa-phone"></i>
+                        <span>${esc(user.phone)}</span>
+                    </div>` : ''}
+                    ${user.joinDate ? `
+                    <div class="profile-meta-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>Vào làm ${esc(user.joinDate)}</span>
+                    </div>` : ''}
                 </div>
-                <div style="display: flex; gap: 10px; margin-top: 25px;">
-                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
-                    <button type="button" class="btn btn-secondary" onclick="openPasswordModal()">Đổi mật khẩu</button>
-                </div>
-            </form>
+
+                <button type="button" class="btn btn-secondary" onclick="openPasswordModal()" style="width: 100%; margin-top: 8px;">
+                    <i class="fas fa-lock"></i> Đổi mật khẩu
+                </button>
+            </div>
+
+            <!-- Right: Edit form -->
+            <div class="profile-main-card">
+                <form id="profilePageForm" onsubmit="saveProfilePage(event)">
+                    <div class="profile-section">
+                        <div class="profile-section-title">Thông tin cá nhân</div>
+                        <div class="profile-form-grid">
+                            <div class="form-group">
+                                <label for="profilePageName">Họ và tên *</label>
+                                <input type="text" id="profilePageName" value="${esc(user.name)}" required placeholder="Nhập họ và tên">
+                            </div>
+                            <div class="form-group">
+                                <label for="profilePageEmail">Email *</label>
+                                <input type="email" id="profilePageEmail" value="${esc(user.email)}" required placeholder="email@example.com">
+                            </div>
+                            <div class="form-group">
+                                <label for="profilePagePhone">Số điện thoại</label>
+                                <input type="tel" id="profilePagePhone" value="${esc(user.phone)}" placeholder="0xxxxxxxxx">
+                            </div>
+                            <div class="form-group">
+                                <label for="profilePageAddress">Địa chỉ</label>
+                                <input type="text" id="profilePageAddress" value="${esc(user.address)}" placeholder="Số nhà, đường...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <div class="profile-section-title">Thông tin hệ thống <span class="profile-readonly-note">(chỉ đọc)</span></div>
+                        <div class="profile-info-grid">
+                            <div class="profile-info-item">
+                                <span class="profile-info-label">Vai trò</span>
+                                <span class="profile-info-value">${roleLabel}</span>
+                            </div>
+                            <div class="profile-info-item">
+                                <span class="profile-info-label">Phòng ban</span>
+                                <span class="profile-info-value">${esc(user.department || '—')}</span>
+                            </div>
+                            <div class="profile-info-item">
+                                <span class="profile-info-label">Chức vụ</span>
+                                <span class="profile-info-value">${esc(user.position || '—')}</span>
+                            </div>
+                            <div class="profile-info-item">
+                                <span class="profile-info-label">Ngày vào làm</span>
+                                <span class="profile-info-value">${esc(user.joinDate || '—')}</span>
+                            </div>
+                            <div class="profile-info-item">
+                                <span class="profile-info-label">Ngày sinh</span>
+                                <span class="profile-info-value">${esc(user.birthday || '—')}</span>
+                            </div>
+                            <div class="profile-info-item">
+                                <span class="profile-info-label">Giới tính</span>
+                                <span class="profile-info-value">${esc(user.gender || '—')}</span>
+                            </div>
+                            <div class="profile-info-item">
+                                <span class="profile-info-label">Phường/Xã</span>
+                                <span class="profile-info-value">${esc(user.ward || '—')}</span>
+                            </div>
+                            <div class="profile-info-item">
+                                <span class="profile-info-label">Tỉnh/Thành phố</span>
+                                <span class="profile-info-value">${esc(user.province || '—')}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="profile-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Lưu thay đổi
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     `;
 }
+
 
 async function saveProfilePage(e) {
     e.preventDefault();

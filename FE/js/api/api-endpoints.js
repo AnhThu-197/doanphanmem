@@ -59,6 +59,11 @@ const API_ENDPOINTS = {
         delete: (id) => `/admin/users/${id}`
     },
 
+    trungLap: {
+        list: '/khach-hang/trung-lap',
+        gop: (id) => `/khach-hang/trung-lap/${id}/gop`
+    },
+
     docs: {
         openApiJson: '/v3/api-docs',
         swaggerUi: '/swagger-ui.html'

@@ -25,39 +25,50 @@ function loadCampaignExpensesPage() {
     const remaining = totalBudget - totalSpent;
     
     mainContent.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 class="page-title">Quản lý Chi phí Chiến dịch</h2>
+        <div class="page-header">
+            <div>
+                <h1>Chi phí Chiến dịch</h1>
+                <p>Theo dõi và quản lý chi phí thực tế của từng chiến dịch.</p>
+            </div>
             <button class="btn btn-primary" onclick="openExpenseModalInline()">
                 <i class="fas fa-plus"></i> Thêm Chi phí
             </button>
         </div>
 
-        <!-- Thống kê tổng quan -->
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px;">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 12px; color: white;">
-                <div style="font-size: 14px; opacity: 0.9;">Tổng Ngân sách</div>
-                <div style="font-size: 28px; font-weight: bold; margin: 10px 0;">${formatCurrency(totalBudget)}</div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-wallet"></i></div>
+                <div class="stat-info">
+                    <h3>${formatCurrency(totalBudget)}</h3>
+                    <p>Tổng ngân sách</p>
+                </div>
             </div>
-            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 12px; color: white;">
-                <div style="font-size: 14px; opacity: 0.9;">Đã Chi</div>
-                <div style="font-size: 28px; font-weight: bold; margin: 10px 0;">${formatCurrency(totalSpent)}</div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-coins"></i></div>
+                <div class="stat-info">
+                    <h3>${formatCurrency(totalSpent)}</h3>
+                    <p>Đã chi</p>
+                </div>
             </div>
-            <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 20px; border-radius: 12px; color: white;">
-                <div style="font-size: 14px; opacity: 0.9;">Số Khoản chi</div>
-                <div style="font-size: 32px; font-weight: bold; margin: 10px 0;">${totalExpenses}</div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-receipt"></i></div>
+                <div class="stat-info">
+                    <h3>${totalExpenses}</h3>
+                    <p>Số khoản chi</p>
+                </div>
             </div>
-            <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); padding: 20px; border-radius: 12px; color: white;">
-                <div style="font-size: 14px; opacity: 0.9;">Còn Lại</div>
-                <div style="font-size: 28px; font-weight: bold; margin: 10px 0;">${formatCurrency(remaining)}</div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-piggy-bank"></i></div>
+                <div class="stat-info">
+                    <h3>${formatCurrency(remaining)}</h3>
+                    <p>Còn lại</p>
+                </div>
             </div>
         </div>
 
-        <!-- Thông báo hướng dẫn -->
-        <div style="background: #dbeafe; padding: 20px; border-radius: 12px; margin-bottom: 30px; border-left: 4px solid #3b82f6;">
-            <h3 style="color: #1e40af; margin-bottom: 10px;">
-                <i class="fas fa-info-circle"></i> Hướng dẫn Quản lý Chi phí
-            </h3>
-            <ul style="color: #1e40af; margin-left: 20px; line-height: 1.8;">
+        <div class="info-box">
+            <h4><i class="fas fa-info-circle"></i> Hướng dẫn</h4>
+            <ul>
                 <li>Nhập các khoản chi phí thực tế cho từng chiến dịch</li>
                 <li>Hệ thống tự động tổng hợp và cập nhật vào chiến dịch</li>
                 <li>Theo dõi ngân sách và cảnh báo khi vượt mức</li>
@@ -65,42 +76,47 @@ function loadCampaignExpensesPage() {
             </ul>
         </div>
 
-        <!-- Danh sách chiến dịch -->
-        <h3 style="margin-bottom: 15px;">Chiến dịch đang chạy</h3>
-        <div id="campaignExpenseCards" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; margin-bottom: 40px;">
-            ${renderCampaignExpenseCards(campaigns)}
+        <div>
+            <h3 style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px;">Chiến dịch đang chạy</h3>
+            <div id="campaignExpenseCards" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; margin-bottom: 32px;">
+                ${renderCampaignExpenseCards(campaigns)}
+            </div>
         </div>
 
-        <!-- Danh sách chi phí gần đây -->
-        <h3 style="margin-bottom: 15px;">Chi phí gần đây</h3>
-        <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Mã</th>
-                        <th>Chiến dịch</th>
-                        <th>Tên Khoản chi</th>
-                        <th>Loại</th>
-                        <th>Số tiền</th>
-                        <th>Ngày</th>
-                        <th>Nguồn</th>
-                        <th>Hành động</th>
-                    </tr>
-                </thead>
-                <tbody id="expensesTableInline">
-                    ${renderExpensesTableInline(expenses)}
-                </tbody>
-            </table>
+        <div class="table-container">
+            <div class="table-header">
+                <h3>Chi phí gần đây</h3>
+            </div>
+            <div class="data-table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Mã</th>
+                            <th>Chiến dịch</th>
+                            <th>Tên khoản chi</th>
+                            <th>Loại</th>
+                            <th>Số tiền</th>
+                            <th>Ngày</th>
+                            <th>Nguồn</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expensesTableInline">
+                        ${renderExpensesTableInline(expenses)}
+                    </tbody>
+                </table>
+            </div>
         </div>
     `;
 }
 
+
 function renderCampaignExpenseCards(campaigns) {
     if (campaigns.length === 0) {
         return `
-            <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #94a3b8;">
-                <i class="fas fa-bullhorn" style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
-                <p>Chưa có chiến dịch nào</p>
+            <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">
+                <i class="fas fa-bullhorn" style="font-size: 36px; margin-bottom: 12px; display: block; opacity: 0.4;"></i>
+                <p style="font-size: 13px;">Chưa có chiến dịch nào</p>
             </div>
         `;
     }
@@ -110,54 +126,49 @@ function renderCampaignExpenseCards(campaigns) {
         const isOverBudget = campaign.actualSpent > campaign.budget;
         
         return `
-            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid ${isOverBudget ? '#ef4444' : '#3b82f6'};">
-                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+            <div class="expense-campaign-card ${isOverBudget ? 'over-budget' : ''}">
+                <div class="campaign-card-header">
                     <div>
-                        <h3 style="margin: 0 0 5px 0; font-size: 16px;">${campaign.name}</h3>
-                        <span class="status ${campaign.status === 'active' ? 'customer' : 'lead'}" style="font-size: 11px;">
+                        <h3>${campaign.name}</h3>
+                        <span class="status-badge ${campaign.status === 'active' ? 'active' : 'planning'}">
                             ${campaign.status === 'active' ? 'Đang chạy' : 'Hoàn thành'}
                         </span>
                     </div>
-                    <button class="btn btn-primary" onclick="openExpenseModalInline(${campaign.id})" style="padding: 6px 12px; font-size: 13px;">
-                        <i class="fas fa-plus"></i> Thêm chi phí
+                    <button class="btn btn-primary" onclick="openExpenseModalInline(${campaign.id})" style="padding: 6px 10px; font-size: 12px;">
+                        <i class="fas fa-plus"></i> Thêm
                     </button>
                 </div>
                 
-                <div style="margin-bottom: 10px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span style="font-size: 13px; color: #64748b;">Ngân sách</span>
-                        <strong style="font-size: 14px;">${formatCurrency(campaign.budget)}</strong>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span style="font-size: 13px; color: #64748b;">Đã chi</span>
-                        <strong style="font-size: 14px; color: ${isOverBudget ? '#ef4444' : '#10b981'};">
-                            ${formatCurrency(campaign.actualSpent)}
-                        </strong>
-                    </div>
-                    <div style="display: flex; justify-content: space-between;">
-                        <span style="font-size: 13px; color: #64748b;">Còn lại</span>
-                        <strong style="font-size: 14px; color: ${isOverBudget ? '#ef4444' : '#3b82f6'};">
-                            ${formatCurrency(campaign.budget - campaign.actualSpent)}
-                        </strong>
-                    </div>
+                <div class="budget-row">
+                    <span>Ngân sách</span>
+                    <strong>${formatCurrency(campaign.budget)}</strong>
+                </div>
+                <div class="budget-row">
+                    <span>Đã chi</span>
+                    <strong class="${isOverBudget ? 'over' : 'ok'}">${formatCurrency(campaign.actualSpent)}</strong>
+                </div>
+                <div class="budget-row">
+                    <span>Còn lại</span>
+                    <strong class="${isOverBudget ? 'over' : ''}">${formatCurrency(campaign.budget - campaign.actualSpent)}</strong>
                 </div>
                 
-                <div style="background: #f1f5f9; height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 5px;">
-                    <div style="background: ${isOverBudget ? '#ef4444' : '#3b82f6'}; height: 100%; width: ${Math.min(percentage, 100)}%; transition: width 0.3s;"></div>
+                <div class="progress-bar-track">
+                    <div class="progress-bar-fill ${isOverBudget ? 'over' : ''}" style="width: ${Math.min(percentage, 100)}%;"></div>
                 </div>
-                <div style="text-align: right; font-size: 12px; color: ${isOverBudget ? '#ef4444' : '#64748b'};">
-                    ${percentage}% ${isOverBudget ? '(Vượt ngân sách)' : ''}
+                <div class="progress-label ${isOverBudget ? 'over' : ''}">
+                    ${percentage}%${isOverBudget ? ' · Vượt ngân sách' : ''}
                 </div>
                 
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
-                    <button class="btn btn-secondary" onclick="viewCampaignExpensesDetail(${campaign.id})" style="width: 100%; padding: 8px; font-size: 13px;">
-                        <i class="fas fa-list"></i> Xem chi tiết chi phí
+                <div class="campaign-card-footer">
+                    <button class="btn btn-secondary" onclick="viewCampaignExpensesDetail(${campaign.id})" style="width: 100%; font-size: 12px;">
+                        <i class="fas fa-list"></i> Xem chi tiết
                     </button>
                 </div>
             </div>
         `;
     }).join('');
 }
+
 
 function renderExpensesTableInline(expenses) {
     if (expenses.length === 0) {
@@ -176,11 +187,11 @@ function renderExpensesTableInline(expenses) {
             <td><strong>#${expense.id}</strong></td>
             <td>${expense.campaignName}</td>
             <td>${expense.name}</td>
-            <td><span class="status lead">${expense.type}</span></td>
-            <td><strong style="color: #ef4444;">${formatCurrency(expense.amount)}</strong></td>
+            <td><span class="status-badge planning">${expense.type}</span></td>
+            <td><strong class="text-danger">${formatCurrency(expense.amount)}</strong></td>
             <td>${formatDate(expense.date)}</td>
             <td>
-                <span class="status ${expense.source === 'Nhập thủ công' ? 'suspect' : 'customer'}" style="font-size: 11px;">
+                <span class="status-badge ${expense.source === 'Nhập thủ công' ? 'planning' : 'active'}">
                     ${expense.source}
                 </span>
             </td>
@@ -196,6 +207,7 @@ function renderExpensesTableInline(expenses) {
             </td>
         </tr>
     `).join('');
+
 }
 
 function openExpenseModalInline(campaignId = null) {
@@ -255,11 +267,10 @@ function openExpenseModalInline(campaignId = null) {
                         <textarea id="expenseNoteInline" rows="3" placeholder="Mô tả chi tiết về khoản chi..."></textarea>
                     </div>
 
-                    <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                        <p style="color: #92400e; margin: 0; font-size: 13px;">
-                            <i class="fas fa-info-circle"></i> 
-                            Chi phí từ API (Facebook Ads, Google Ads) sẽ tự động đồng bộ. 
-                            Chỉ nhập thủ công các chi phí khác.
+                    <div class="info-box" style="margin-bottom: 15px;">
+                        <p style="margin: 0; font-size: 12px; color: var(--text-secondary);">
+                            <i class="fas fa-info-circle"></i>
+                            Chi phí từ API (Facebook Ads, Google Ads) sẽ tự động đồng bộ. Chỉ nhập thủ công các chi phí khác.
                         </p>
                     </div>
 

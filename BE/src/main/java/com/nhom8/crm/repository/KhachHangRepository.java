@@ -14,9 +14,9 @@ import java.util.Optional;
 public interface KhachHangRepository extends JpaRepository<KhachHang, Integer>,
         JpaSpecificationExecutor<KhachHang> {
 
-    Optional<KhachHang> findByEmailAndDaXoaFalse(String email);
+    List<KhachHang> findByEmailAndDaXoaFalse(String email);
 
-    Optional<KhachHang> findBySoDienThoaiAndDaXoaFalse(String soDienThoai);
+    List<KhachHang> findBySoDienThoaiAndDaXoaFalse(String soDienThoai);
 
     List<KhachHang> findByDaXoaFalse();
 
@@ -40,4 +40,10 @@ public interface KhachHangRepository extends JpaRepository<KhachHang, Integer>,
     @org.springframework.data.jpa.repository.Modifying
     @Query("UPDATE KhachHang kh SET kh.nguoiPhuTrach = null WHERE kh.nguoiPhuTrach.maNhanVien = :maNhanVien")
     void nullifyNguoiPhuTrach(@Param("maNhanVien") Integer maNhanVien);
+
+    @Query("SELECT k1, k2 FROM KhachHang k1, KhachHang k2 WHERE k1.maKhachHang < k2.maKhachHang " +
+           "AND k1.daXoa = false AND k2.daXoa = false " +
+           "AND ((k1.email IS NOT NULL AND k1.email <> '' AND k1.email = k2.email) " +
+           "OR (k1.soDienThoai IS NOT NULL AND k1.soDienThoai <> '' AND k1.soDienThoai = k2.soDienThoai))")
+    List<Object[]> findDuplicatePairs();
 }

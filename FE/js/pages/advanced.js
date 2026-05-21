@@ -402,32 +402,69 @@ function saveAppointmentResult(e) {
     loadSmartReminders();
 }
 
-function loadMergeDuplicates() {
+async function loadMergeDuplicates() {
     const content = document.getElementById('mainContent');
     if (!content) return;
 
-    const duplicates = DATA.duplicateCustomers || [];
+    const isApiSession = AUTH.getCurrentUser()?.authSource === 'api';
+    let duplicates = [];
+    const ignored = JSON.parse(localStorage.getItem('ignored_duplicate_pairs') || '[]');
+    
+    if (isApiSession) {
+        try {
+            const res = await API_SERVICES.trungLap.list();
+            const allDuplicates = res.data || res || [];
+            duplicates = allDuplicates.filter(item => !ignored.includes(String(item.id)) && !ignored.includes(item.id));
+        } catch (error) {
+            console.error('Error loading duplicates:', error);
+            alert('Không thể tải danh sách trùng lặp từ server.');
+            return;
+        }
+    } else {
+        const allDuplicates = DATA.duplicateCustomers || [];
+        duplicates = allDuplicates.filter(item => !ignored.includes(String(item.id)) && !ignored.includes(item.id));
+    }
+
     content.innerHTML = `
         <div class="page-header">
             <div>
                 <h1>Gộp dữ liệu trùng lặp</h1>
-                <p>Kiểm tra và xử lý các cặp khách hàng có khả năng trùng.</p>
+                <p>Kiểm tra và xử lý các cặp khách hàng trùng lặp hoặc tương đồng thông tin.</p>
             </div>
         </div>
         <div class="table-container">
-            <div class="table-header"><h3>Phát hiện ${duplicates.length} cặp trùng</h3></div>
+            <div class="table-header"><h3>Phát hiện ${duplicates.length} cặp cần xử lý</h3></div>
             <div style="display:grid; gap:16px; padding:20px;">
                 ${duplicates.map(item => `
-                    <div style="border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-                            <div><strong>${item.customer1.name}</strong><br>${item.customer1.email || ''}<br>${item.customer1.phone || ''}</div>
-                            <div><strong>${item.customer2.name}</strong><br>${item.customer2.email || ''}<br>${item.customer2.phone || ''}</div>
+                    <div style="border:1px solid #e2e8f0; border-radius:8px; padding:16px; background:#fff; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+                            <div style="padding:12px; background:#f8fafc; border-radius:6px; border-left: 4px solid #0284c7;">
+                                <div style="font-weight:600; color:#0284c7; margin-bottom:8px; font-size:14px; display:flex; align-items:center; gap:8px;">
+                                    <i class="fas fa-user-check" style="color:#0284c7;"></i> Khách hàng 1 (Giữ lại & Gộp)
+                                </div>
+                                <div style="font-weight:600; font-size:15px; color:#1e293b;">${item.customer1.name}</div>
+                                <div style="color:#475569; font-size:13px; margin-top:6px;"><i class="far fa-envelope" style="width:16px;"></i> ${item.customer1.email || 'N/A'}</div>
+                                <div style="color:#475569; font-size:13px; margin-top:2px;"><i class="fas fa-phone-alt" style="width:16px;"></i> ${item.customer1.phone || 'N/A'}</div>
+                            </div>
+                            <div style="padding:12px; background:#f8fafc; border-radius:6px; border-left: 4px solid #ef4444;">
+                                <div style="font-weight:600; color:#ef4444; margin-bottom:8px; font-size:14px; display:flex; align-items:center; gap:8px;">
+                                    <i class="fas fa-user-minus" style="color:#ef4444;"></i> Khách hàng 2 (Xóa bỏ sau khi gộp)
+                                </div>
+                                <div style="font-weight:600; font-size:15px; color:#1e293b;">${item.customer2.name}</div>
+                                <div style="color:#475569; font-size:13px; margin-top:6px;"><i class="far fa-envelope" style="width:16px;"></i> ${item.customer2.email || 'N/A'}</div>
+                                <div style="color:#475569; font-size:13px; margin-top:2px;"><i class="fas fa-phone-alt" style="width:16px;"></i> ${item.customer2.phone || 'N/A'}</div>
+                            </div>
                         </div>
-                        <p style="margin:12px 0;">Độ tương đồng: <strong>${item.similarity}%</strong></p>
-                        <button class="btn btn-primary" onclick="confirmMergeCustomers(${item.id})">Gộp</button>
-                        <button class="btn btn-secondary" onclick="ignoreDuplicate(${item.id})">Bỏ qua</button>
+                        <div style="margin:16px 0 12px 0; display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:13px; color:#64748b;">Độ tương đồng:</span>
+                            <span style="font-weight:600; background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px; font-size:13px;">${item.similarity}%</span>
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn btn-primary btn-sm" onclick="confirmMergeCustomers('${item.id}')"><i class="fas fa-compress-alt"></i> Gộp hai khách hàng</button>
+                            <button class="btn btn-secondary btn-sm" onclick="ignoreDuplicate('${item.id}')"><i class="fas fa-ban"></i> Bỏ qua</button>
+                        </div>
                     </div>
-                `).join('') || '<p style="padding:20px; color:#64748b;">Không còn dữ liệu trùng.</p>'}
+                `).join('') || '<p style="padding:20px; color:#64748b; text-align:center;">Tuyệt vời! Không phát hiện thông tin khách hàng trùng lặp nào.</p>'}
             </div>
         </div>
     `;
@@ -437,25 +474,65 @@ function mergeDuplicateCustomers(duplicateId) {
     confirmMergeCustomers(duplicateId);
 }
 
-function confirmMergeCustomers(duplicateId) {
-    const duplicate = DATA.duplicateCustomers.find(item => Number(item.id) === Number(duplicateId));
-    if (!duplicate || !confirm('Gộp cặp khách hàng này?')) return;
+async function confirmMergeCustomers(duplicateId) {
+    if (!confirm('Bạn có chắc chắn muốn gộp hai khách hàng này?\n\nMọi thông tin trống của Khách hàng 1 sẽ được bổ sung từ Khách hàng 2. Lịch sử tương tác, nhắc nhở, nhãn tag, chiến dịch tham gia của Khách hàng 2 sẽ được chuyển sang Khách hàng 1. Khách hàng 2 sẽ bị xóa.')) return;
 
-    const keep = DATA.customers.find(item => Number(item.id) === Number(duplicate.customer1.id));
-    const remove = DATA.customers.find(item => Number(item.id) === Number(duplicate.customer2.id));
-    if (keep && remove) {
-        DATA.interactions.forEach(interaction => {
-            if (Number(interaction.customerId) === Number(remove.id)) interaction.customerId = keep.id;
-        });
-        remove.deleted = true;
-        remove.deletedDate = new Date().toLocaleDateString('vi-VN');
+    const isApiSession = AUTH.getCurrentUser()?.authSource === 'api';
+    if (isApiSession) {
+        try {
+            await API_SERVICES.trungLap.gop(duplicateId);
+            alert('✓ Gộp khách hàng thành công!');
+            loadMergeDuplicates();
+        } catch (error) {
+            console.error('Error merging customers:', error);
+            alert('⚠ Lỗi: ' + (error.response?.data?.message || error.message || 'Không thể gộp khách hàng'));
+        }
+    } else {
+        const duplicate = DATA.duplicateCustomers.find(item => String(item.id) === String(duplicateId));
+        if (duplicate) {
+            const keep = DATA.customers.find(item => String(item.id) === String(duplicate.customer1.id));
+            const remove = DATA.customers.find(item => String(item.id) === String(duplicate.customer2.id));
+            if (keep && remove) {
+                // Merge data fields
+                Object.keys(remove).forEach(key => {
+                    if (!keep[key] && remove[key]) {
+                        keep[key] = remove[key];
+                    }
+                });
+                
+                DATA.interactions.forEach(interaction => {
+                    if (String(interaction.customerId) === String(remove.id)) interaction.customerId = keep.id;
+                });
+                remove.deleted = true;
+                remove.deletedDate = new Date().toLocaleDateString('vi-VN');
+            }
+            DATA.duplicateCustomers = DATA.duplicateCustomers.filter(item => String(item.id) !== String(duplicateId));
+            alert('✓ Gộp khách hàng thành công!');
+            loadMergeDuplicates();
+        }
     }
-
-    DATA.duplicateCustomers = DATA.duplicateCustomers.filter(item => Number(item.id) !== Number(duplicateId));
-    loadMergeDuplicates();
 }
 
-function ignoreDuplicate(duplicateId) {
-    DATA.duplicateCustomers = DATA.duplicateCustomers.filter(item => Number(item.id) !== Number(duplicateId));
-    loadMergeDuplicates();
+async function ignoreDuplicate(duplicateId) {
+    if (!confirm('Bạn có muốn bỏ qua trùng lặp này? Hệ thống sẽ không cảnh báo trùng lặp cho cặp khách hàng này nữa.')) return;
+
+    const isApiSession = AUTH.getCurrentUser()?.authSource === 'api';
+    if (isApiSession) {
+        let ignored = JSON.parse(localStorage.getItem('ignored_duplicate_pairs') || '[]');
+        if (!ignored.includes(String(duplicateId))) {
+            ignored.push(String(duplicateId));
+            localStorage.setItem('ignored_duplicate_pairs', JSON.stringify(ignored));
+        }
+        alert('✓ Đã bỏ qua trùng lặp!');
+        loadMergeDuplicates();
+    } else {
+        let ignored = JSON.parse(localStorage.getItem('ignored_duplicate_pairs') || '[]');
+        if (!ignored.includes(String(duplicateId))) {
+            ignored.push(String(duplicateId));
+            localStorage.setItem('ignored_duplicate_pairs', JSON.stringify(ignored));
+        }
+        DATA.duplicateCustomers = DATA.duplicateCustomers.filter(item => String(item.id) !== String(duplicateId));
+        alert('✓ Đã bỏ qua trùng lặp!');
+        loadMergeDuplicates();
+    }
 }
