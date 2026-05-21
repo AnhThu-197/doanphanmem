@@ -701,7 +701,7 @@ function generateRecommendations(campaign, roi, conversionRate, cpl, cpa) {
 }
 
 // View campaign detail (simple view)
-// DEPRECATED: Hàm này đã được thay thế bởi viewCampaignDetail trong script.js
+// DEPRECATED: Hàm này đã được thay thế bởi viewCampaignDetail trong pages/campaigns.js
 // function viewCampaignDetail(campaignId) {
 //     viewCampaignAnalytics(campaignId);
 // }

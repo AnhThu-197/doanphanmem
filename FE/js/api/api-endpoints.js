@@ -8,7 +8,8 @@ const API_ENDPOINTS = {
     },
 
     profile: {
-        me: '/profile/me'
+        me: '/profile/me',
+        update: '/profile/me'
     },
 
     khachHang: {

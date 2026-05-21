@@ -13,7 +13,9 @@ const API_SERVICES = {
 
     profile: {
         me: () =>
-            API_CLIENT.get(API_ENDPOINTS.profile.me)
+            API_CLIENT.get(API_ENDPOINTS.profile.me),
+        update: (payload) =>
+            API_CLIENT.put(API_ENDPOINTS.profile.update, payload)
     },
 
     khachHang: {

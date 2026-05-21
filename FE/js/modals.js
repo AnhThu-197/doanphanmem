@@ -8,7 +8,7 @@
 // =============================================
 
 /**
- * Mở modal theo ID (sẽ bị override bởi script.js nếu có)
+ * Mở modal theo ID
  */
 if (typeof openModal === 'undefined') {
     window.openModal = function(modalId) {
@@ -21,7 +21,7 @@ if (typeof openModal === 'undefined') {
 }
 
 /**
- * Đóng modal theo ID (sẽ bị override bởi script.js nếu có)
+ * Đóng modal theo ID
  */
 if (typeof closeModal === 'undefined') {
     window.closeModal = function(modalId) {
@@ -63,7 +63,7 @@ document.addEventListener('keydown', function(e) {
 // =============================================
 
 /**
- * Chuyển tab trong modal (fallback - script.js có thể override)
+ * Chuyển tab trong modal
  */
 if (typeof switchTab === 'undefined') {
     window.switchTab = function(tabName) {

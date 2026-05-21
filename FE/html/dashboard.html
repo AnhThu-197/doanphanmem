@@ -62,7 +62,7 @@
         </header>
 
         <main id="mainContent">
-            <!-- Nội dung sẽ được load động bởi script.js -->
+            <!-- Nội dung sẽ được load động bởi app router -->
         </main>
     </div>
 
@@ -70,18 +70,45 @@
     <div id="modalsContainer"></div>
 
     <!-- ===== SCRIPTS ===== -->
-    <script src="../js/api-config.js"></script>
-    <script src="../js/api-endpoints.js"></script>
-    <script src="../js/api-client.js"></script>
-    <script src="../js/api-services.js"></script>
+    <!-- API Layer -->
+    <script src="../js/api/api-config.js"></script>
+    <script src="../js/api/api-endpoints.js"></script>
+    <script src="../js/api/api-client.js"></script>
+    <script src="../js/api/api-services.js"></script>
+
+    <!-- Core -->
     <script src="../js/auth.js"></script>
     <script src="../js/data.js"></script>
     <script src="../js/modals.js"></script>
-    <script src="../js/script.js"></script>
+
+    <!-- Feature modules -->
     <script src="../js/campaign-metrics.js"></script>
     <script src="../js/financial-integration.js"></script>
     <script src="../js/reports-employees.js"></script>
-    <script src="../js/settings-handlers.js"></script>
+
+    <!-- Utils -->
+    <script src="../js/utils/formatters.js"></script>
+    <script src="../js/utils/ui-helpers.js"></script>
+    <script src="../js/utils/notifications.js"></script>
+
+    <!-- Pages (override các hàm tương ứng trong legacy) -->
+    <script src="../js/pages/dashboard.js"></script>
+    <script src="../js/pages/customers.js"></script>
+    <script src="../js/pages/campaigns.js"></script>
+    <script src="../js/pages/messages.js"></script>
+    <script src="../js/pages/trash.js"></script>
+    <script src="../js/pages/users.js"></script>
+    <script src="../js/pages/advanced.js"></script>
+    <script src="../js/pages/interactions.js"></script>
+    <script src="../js/pages/api-sync.js"></script>
+    <script src="../js/pages/contracts.js"></script>
+    <script src="../js/pages/revenue-sync.js"></script>
+    <script src="../js/pages/campaign-expenses.js"></script>
+    <script src="../js/pages/profile.js"></script>
+    <script src="../js/pages/settings.js"></script>
+
+    <!-- App entry point -->
+    <script src="../js/app.js"></script>
     <script>
         /**
          * Load modals từ file components sau khi DOM ready.
