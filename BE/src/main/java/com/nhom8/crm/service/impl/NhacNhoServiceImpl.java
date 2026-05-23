@@ -87,21 +87,59 @@ public class NhacNhoServiceImpl implements NhacNhoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên với mã: " + request.getEmployeeId()));
 
         LocalDateTime thoiGianNhac = parseDateTime(request.getDate(), request.getTime());
+        String loaiNhacNho = mapFrontendTypeToDb(request.getType());
+        Integer nhacTruocPhut = request.getReminderBefore() != null ? request.getReminderBefore() : 30;
 
-        NhacNho entity = NhacNho.builder()
-                .khachHang(khachHang)
-                .nhanVien(nhanVien)
-                .tieuDe(request.getTitle())
-                .moTa(request.getNotes())
-                .loaiNhacNho(mapFrontendTypeToDb(request.getType()))
-                .thoiGianNhac(thoiGianNhac)
-                .nhacTruocPhut(request.getReminderBefore() != null ? request.getReminderBefore() : 30)
-                .trangThaiNhacNho(mapFrontendStatusToDb(request.getStatus()))
-                .ketQua(mapFrontendResultToDb(request.getResult()))
-                .ghiChuKetQua(request.getResultNotes())
-                .build();
+        // Call Stored Procedure sp_ThemNhacNho (SP09)
+        List<Object[]> spResultList = repository.callSpThemNhacNho(
+                khachHang.getMaKhachHang(),
+                nhanVien.getMaNhanVien(),
+                request.getTitle(),
+                loaiNhacNho,
+                thoiGianNhac,
+                nhacTruocPhut,
+                request.getNotes()
+        );
 
-        NhacNho saved = repository.save(entity);
+        if (spResultList == null || spResultList.isEmpty()) {
+            throw new RuntimeException("Gọi Stored Procedure thất bại và không trả về kết quả.");
+        }
+
+        Object[] spResult = spResultList.get(0);
+        String ketQua = (String) spResult[0];
+        String thongBao = (String) spResult[1];
+
+        if ("Lỗi".equalsIgnoreCase(ketQua)) {
+            throw new IllegalArgumentException(thongBao);
+        }
+
+        // Successfully inserted! Retrieve the newly generated ID
+        Integer newId = null;
+        if (spResult.length > 2 && spResult[2] != null) {
+            if (spResult[2] instanceof Number) {
+                newId = ((Number) spResult[2]).intValue();
+            } else {
+                newId = Integer.parseInt(spResult[2].toString());
+            }
+        }
+
+        // Retrieve the generated entity and optionally update fields
+        NhacNho saved = repository.findById(newId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lịch hẹn vừa tạo với mã: " + newId));
+
+        if (request.getStatus() != null || request.getResult() != null || request.getResultNotes() != null) {
+            if (request.getStatus() != null) {
+                saved.setTrangThaiNhacNho(mapFrontendStatusToDb(request.getStatus()));
+            }
+            if (request.getResult() != null) {
+                saved.setKetQua(mapFrontendResultToDb(request.getResult()));
+            }
+            if (request.getResultNotes() != null) {
+                saved.setGhiChuKetQua(request.getResultNotes());
+            }
+            saved = repository.save(saved);
+        }
+
         logInteractionHistoryIfCompleted(saved);
         return convertToResponse(saved);
     }

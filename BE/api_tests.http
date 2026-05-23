@@ -147,3 +147,35 @@ Content-Type: application/json
   "newPassword": "newPassword123"
 }
 
+###
+
+### 16. Gửi thông điệp marketing (Live Email hoặc Mock SMS/Zalo)
+POST http://localhost:8080/api/thongdiep
+Content-Type: application/json
+
+{
+  "customerId": 1,
+  "employeeId": 3,
+  "type": "email",
+  "content": "Chào {customerName}, chúng tôi xin gửi tặng bạn chương trình ưu đãi đặc biệt nhân dịp ngày lễ lớn!",
+  "promoTitle": "Giảm giá 20% gói Premium",
+  "promoDescription": "Áp dụng cho mọi hình thức thanh toán trực tiếp qua cổng thanh toán CRM.",
+  "promoCode": "CRM20",
+  "promoExpiry": "2026-06-30",
+  "promoLink": "https://vyphan.com/crm20",
+  "schedule": false,
+  "trackOpen": true
+}
+
+###
+
+### 17. Lấy toàn bộ lịch sử gửi thông điệp
+GET http://localhost:8080/api/thongdiep/lichsu
+Accept: application/json
+
+###
+
+### 18. Lấy lịch sử gửi thông điệp của khách hàng có ID = 1
+GET http://localhost:8080/api/thongdiep/lichsu/khachhang/1
+Accept: application/json
+
