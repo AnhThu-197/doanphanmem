@@ -18,4 +18,5 @@ public class InteractionResponse {
     private String content;
     private String notes;
     private LocalDateTime date;
+    private java.util.List<TepDinhKemResponse> attachments;
 }

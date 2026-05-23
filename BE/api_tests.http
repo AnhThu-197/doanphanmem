@@ -179,3 +179,120 @@ Accept: application/json
 GET http://localhost:8080/api/thongdiep/lichsu/khachhang/1
 Accept: application/json
 
+###
+
+### 19. Lấy toàn bộ danh sách mẫu thông điệp
+GET http://localhost:8080/api/thongdiep/mau
+Accept: application/json
+
+###
+
+### 20. Lấy thông tin mẫu thông điệp theo ID (Ví dụ ID = 1)
+GET http://localhost:8080/api/thongdiep/mau/1
+Accept: application/json
+
+###
+
+### 21. Lấy danh sách mẫu thông điệp theo loại (Ví dụ Email)
+GET http://localhost:8080/api/thongdiep/mau/loai/Email
+Accept: application/json
+
+###
+
+### 22. Tạo mới một mẫu thông điệp
+POST http://localhost:8080/api/thongdiep/mau
+Content-Type: application/json
+
+{
+  "title": "Mẫu tri ân khách hàng Premium (Test)",
+  "content": "Kính gửi {customerName}, chúng tôi vô cùng trân trọng sự tin dùng của anh/chị dành cho dịch vụ CRM. Chúc anh/chị một ngày vui vẻ!",
+  "type": "Email",
+  "creatorId": 3
+}
+
+###
+
+### 23. Cập nhật thông tin mẫu thông điệp vừa tạo (Ví dụ ID = 1)
+PUT http://localhost:8080/api/thongdiep/mau/1
+Content-Type: application/json
+
+{
+  "title": "Mẫu tri ân đối tác tin cậy (Đã cập nhật)",
+  "content": "Xin chào {customerName}, cảm ơn đối tác đã luôn đồng hành cùng CRM. Chúng tôi xin tặng bạn ưu đãi mới nhất!",
+  "type": "Email",
+  "creatorId": 3
+}
+
+###
+
+### 24. Xóa một mẫu thông điệp (Ví dụ ID = 4)
+DELETE http://localhost:8080/api/thongdiep/mau/4
+Accept: application/json
+
+###
+
+### 25. Lấy thông tin dùng thử của khách hàng (Ví dụ ID = 3, gọi hàm F01 tính ngày còn lại)
+GET http://localhost:8080/api/khachhang/3/dungthu
+Accept: application/json
+
+###
+
+### 26. Thiết lập dùng thử khách hàng ở TRẠNG THÁI ACTIVE (Dùng thử chưa hết hạn)
+PUT http://localhost:8080/api/khachhang/3/dungthu
+Content-Type: application/json
+
+{
+  "startDate": "2026-05-20",
+  "durationDays": 30,
+  "status": "Đang dùng thử"
+}
+
+###
+
+### 27. Lọc kiểm tra thông tin dùng thử vừa cập nhật (Tính ngày còn lại)
+GET http://localhost:8080/api/khachhang/3/dungthu
+Accept: application/json
+
+###
+
+### 28. Thiết lập dùng thử ĐÃ HẾT HẠN (Tự động kích hoạt Trigger TRG04 để cập nhật trạng thái sang 'Hết hạn dùng thử')
+PUT http://localhost:8080/api/khachhang/3/dungthu
+Content-Type: application/json
+
+{
+  "startDate": "2026-04-01",
+  "durationDays": 10,
+  "status": "Đang dùng thử"
+}
+
+###
+
+### 29. Upload tệp đính kèm và gắn vào tương tác (Ví dụ tương tác ID = 2)
+POST http://localhost:8080/api/tuongtac/2/files
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="tailieu.txt"
+Content-Type: text/plain
+
+< ./pom.xml
+--WebAppBoundary--
+
+###
+
+### 30. Lấy toàn bộ tương tác để kiểm tra tệp vừa đính kèm
+GET http://localhost:8080/api/tuongtac
+Accept: application/json
+
+###
+
+### 31. Tải xuống tệp đính kèm bằng ID tệp (Ví dụ ID = 1)
+GET http://localhost:8080/api/tuongtac/files/1
+Accept: application/octet-stream
+
+###
+
+### 32. Hủy liên kết tệp đính kèm khỏi tương tác (Ví dụ tương tác ID = 2, tệp ID = 1)
+DELETE http://localhost:8080/api/tuongtac/2/files/1
+Accept: application/json
+

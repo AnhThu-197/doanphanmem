@@ -50,4 +50,13 @@ public class LichSuTuongTac {
     @Builder.Default
     @Column(name = "ngayCapNhat")
     private LocalDateTime ngayCapNhat = LocalDateTime.now();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "LichSuTuongTac_TepDinhKem",
+        joinColumns = @JoinColumn(name = "maTuongTac"),
+        inverseJoinColumns = @JoinColumn(name = "maTep")
+    )
+    @Builder.Default
+    private java.util.Set<TepDinhKem> tepDinhKems = new java.util.HashSet<>();
 }

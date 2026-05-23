@@ -2,6 +2,8 @@ package com.nhom8.crm.controller;
 
 import com.nhom8.crm.entity.KhachHang;
 import com.nhom8.crm.service.KhachHangService;
+import com.nhom8.crm.dto.request.TrialUpdateRequest;
+import com.nhom8.crm.dto.response.TrialResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -70,5 +72,19 @@ public class KhachHangController {
     public ResponseEntity<Void> deleteKhachHangPermanently(@PathVariable Integer id) {
         khachHangService.deleteKhachHangPermanently(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // 8. Lấy thông tin dùng thử của khách hàng (bao gồm số ngày còn lại tính từ F01)
+    @GetMapping("/{id}/dungthu")
+    public ResponseEntity<TrialResponse> getTrialDetails(@PathVariable Integer id) {
+        TrialResponse response = khachHangService.getTrialDetails(id);
+        return ResponseEntity.ok(response);
+    }
+
+    // 9. Cập nhật thông tin dùng thử (tích hợp Trigger TRG04 của Database)
+    @PutMapping("/{id}/dungthu")
+    public ResponseEntity<TrialResponse> updateTrialDetails(@PathVariable Integer id, @Valid @RequestBody TrialUpdateRequest request) {
+        TrialResponse response = khachHangService.updateTrialDetails(id, request);
+        return ResponseEntity.ok(response);
     }
 }

@@ -2,19 +2,24 @@ package com.nhom8.crm.service.impl;
 
 import com.nhom8.crm.dto.request.InteractionRequest;
 import com.nhom8.crm.dto.response.InteractionResponse;
+import com.nhom8.crm.dto.response.TepDinhKemResponse;
 import com.nhom8.crm.entity.KhachHang;
 import com.nhom8.crm.entity.LichSuTuongTac;
 import com.nhom8.crm.entity.NhanVien;
+import com.nhom8.crm.entity.TepDinhKem;
 import com.nhom8.crm.exception.ResourceNotFoundException;
 import com.nhom8.crm.repository.KhachHangRepository;
 import com.nhom8.crm.repository.LichSuTuongTacRepository;
 import com.nhom8.crm.repository.NhanVienRepository;
+import com.nhom8.crm.repository.TepDinhKemRepository;
 import com.nhom8.crm.service.LichSuTuongTacService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,14 +29,27 @@ public class LichSuTuongTacServiceImpl implements LichSuTuongTacService {
     private final LichSuTuongTacRepository repository;
     private final KhachHangRepository khachHangRepository;
     private final NhanVienRepository nhanVienRepository;
+    private final TepDinhKemRepository tepDinhKemRepository;
+
+    private final Path fileStorageLocation = Paths.get("uploads").toAbsolutePath().normalize();
+
+    {
+        try {
+            java.nio.file.Files.createDirectories(fileStorageLocation);
+        } catch (Exception e) {
+            throw new RuntimeException("Không thể khởi tạo thư mục lưu trữ file uploads.", e);
+        }
+    }
 
     @Autowired
     public LichSuTuongTacServiceImpl(LichSuTuongTacRepository repository,
                                      KhachHangRepository khachHangRepository,
-                                     NhanVienRepository nhanVienRepository) {
+                                     NhanVienRepository nhanVienRepository,
+                                     TepDinhKemRepository tepDinhKemRepository) {
         this.repository = repository;
         this.khachHangRepository = khachHangRepository;
         this.nhanVienRepository = nhanVienRepository;
+        this.tepDinhKemRepository = tepDinhKemRepository;
     }
 
     @Override
@@ -125,6 +143,12 @@ public class LichSuTuongTacServiceImpl implements LichSuTuongTacService {
     // --- Helper Methods ---
 
     private InteractionResponse convertToResponse(LichSuTuongTac entity) {
+        java.util.List<TepDinhKemResponse> attachments = entity.getTepDinhKems() == null ? new java.util.ArrayList<>() :
+                entity.getTepDinhKems().stream()
+                        .map(this::convertToTepResponse)
+                        .filter(java.util.Objects::nonNull)
+                        .collect(Collectors.toList());
+
         return InteractionResponse.builder()
                 .id(entity.getMaTuongTac())
                 .customerId(entity.getKhachHang().getMaKhachHang())
@@ -135,7 +159,101 @@ public class LichSuTuongTacServiceImpl implements LichSuTuongTacService {
                 .content(entity.getNoiDung())
                 .notes(entity.getKetQua())
                 .date(entity.getThoiGianTao())
+                .attachments(attachments)
                 .build();
+    }
+
+    private TepDinhKemResponse convertToTepResponse(TepDinhKem entity) {
+        if (entity == null || Boolean.TRUE.equals(entity.getDaXoa())) return null;
+        return TepDinhKemResponse.builder()
+                .id(entity.getMaTep())
+                .fileName(entity.getTenTep())
+                .fileType(entity.getLoaiTep())
+                .downloadUrl("/api/tuongtac/files/" + entity.getMaTep())
+                .createdDate(entity.getNgayTao())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public TepDinhKemResponse uploadAttachment(Integer interactionId, org.springframework.web.multipart.MultipartFile file) {
+        LichSuTuongTac tuongTac = repository.findById(interactionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tương tác với mã: " + interactionId));
+
+        String originalFileName = org.springframework.util.StringUtils.cleanPath(file.getOriginalFilename());
+        try {
+            if (originalFileName.contains("..")) {
+                throw new IllegalArgumentException("Tên tệp không hợp lệ: " + originalFileName);
+            }
+
+            // Tạo tên file duy nhất để tránh trùng lặp
+            String uniqueFileName = java.util.UUID.randomUUID().toString() + "_" + originalFileName;
+            Path targetLocation = this.fileStorageLocation.resolve(uniqueFileName);
+            java.nio.file.Files.copy(file.getInputStream(), targetLocation, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+            // Lưu thông tin tệp đính kèm vào Database
+            TepDinhKem tep = TepDinhKem.builder()
+                    .tenTep(originalFileName)
+                    .duongDanLuuTru(targetLocation.toString())
+                    .loaiTep(file.getContentType())
+                    .daXoa(false)
+                    .build();
+
+            TepDinhKem savedTep = tepDinhKemRepository.save(tep);
+
+            // Gắn kết với tương tác
+            tuongTac.getTepDinhKems().add(savedTep);
+            repository.save(tuongTac);
+
+            return convertToTepResponse(savedTep);
+        } catch (Exception ex) {
+            throw new RuntimeException("Không thể lưu trữ tệp " + originalFileName + ". Vui lòng thử lại!", ex);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public org.springframework.core.io.Resource downloadAttachment(Integer fileId) {
+        TepDinhKem tep = tepDinhKemRepository.findById(fileId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tệp đính kèm với mã: " + fileId));
+
+        if (Boolean.TRUE.equals(tep.getDaXoa())) {
+            throw new ResourceNotFoundException("Tệp đính kèm này đã bị xóa!");
+        }
+
+        try {
+            Path filePath = Paths.get(tep.getDuongDanLuuTru()).normalize();
+            org.springframework.core.io.Resource resource = new org.springframework.core.io.UrlResource(filePath.toUri());
+            if (resource.exists() && resource.isReadable()) {
+                return resource;
+            } else {
+                throw new ResourceNotFoundException("Không tìm thấy tệp vật lý trên máy chủ: " + tep.getTenTep());
+            }
+        } catch (Exception ex) {
+            throw new ResourceNotFoundException("Lỗi tải tệp: " + tep.getTenTep(), ex);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deleteAttachment(Integer interactionId, Integer fileId) {
+        LichSuTuongTac tuongTac = repository.findById(interactionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tương tác với mã: " + interactionId));
+
+        TepDinhKem tep = tepDinhKemRepository.findById(fileId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tệp đính kèm với mã: " + fileId));
+
+        // Hủy liên kết
+        if (tuongTac.getTepDinhKems().contains(tep)) {
+            tuongTac.getTepDinhKems().remove(tep);
+            repository.save(tuongTac);
+        }
+
+        // Đánh dấu xóa tệp
+        tep.setDaXoa(true);
+        tep.setLyDoXoa("Xóa liên kết khỏi tương tác mã: " + interactionId);
+        tep.setNgayXoa(LocalDateTime.now());
+        tepDinhKemRepository.save(tep);
     }
 
     private String mapFrontendTypeToDb(String feType) {

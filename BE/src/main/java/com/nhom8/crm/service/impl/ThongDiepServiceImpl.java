@@ -1,5 +1,7 @@
 package com.nhom8.crm.service.impl;
 
+import com.nhom8.crm.dto.request.MauThongDiepRequest;
+import com.nhom8.crm.dto.response.MauThongDiepResponse;
 import com.nhom8.crm.dto.request.SendMessageRequest;
 import com.nhom8.crm.dto.response.SendMessageResponse;
 import com.nhom8.crm.entity.KhachHang;
@@ -262,6 +264,109 @@ public class ThongDiepServiceImpl implements ThongDiepService {
                 .status(entity.getTrangThaiGui())
                 .failureReason(entity.getLyDoThatBai())
                 .sentTime(entity.getThoiGianGui())
+                .build();
+    }
+
+    @Override
+    public List<MauThongDiepResponse> getAllTemplates() {
+        return mauThongDiepRepository.findAll().stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public MauThongDiepResponse getTemplateById(Integer id) {
+        MauThongDiep entity = mauThongDiepRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy mẫu thông điệp với mã: " + id));
+        return convertToResponse(entity);
+    }
+
+    @Override
+    public List<MauThongDiepResponse> getTemplatesByType(String type) {
+        String dbType = "Email";
+        if (type != null) {
+            if (type.equalsIgnoreCase("sms")) dbType = "SMS";
+            else if (type.equalsIgnoreCase("zalo")) dbType = "Zalo";
+        }
+        return mauThongDiepRepository.findByLoaiThongDiep(dbType).stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public MauThongDiepResponse createTemplate(MauThongDiepRequest request) {
+        NhanVien creator = null;
+        if (request.getCreatorId() != null) {
+            creator = nhanVienRepository.findById(request.getCreatorId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên tạo mẫu với mã: " + request.getCreatorId()));
+        }
+
+        String dbType = "Email";
+        if (request.getType() != null) {
+            if (request.getType().equalsIgnoreCase("sms")) dbType = "SMS";
+            else if (request.getType().equalsIgnoreCase("zalo")) dbType = "Zalo";
+        }
+
+        MauThongDiep template = MauThongDiep.builder()
+                .tieuDe(request.getTitle())
+                .noiDung(request.getContent())
+                .loaiThongDiep(dbType)
+                .nhanVienTao(creator)
+                .luotSuDung(0)
+                .build();
+
+        MauThongDiep saved = mauThongDiepRepository.save(template);
+        return convertToResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public MauThongDiepResponse updateTemplate(Integer id, MauThongDiepRequest request) {
+        MauThongDiep entity = mauThongDiepRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy mẫu thông điệp với mã: " + id));
+
+        NhanVien creator = null;
+        if (request.getCreatorId() != null) {
+            creator = nhanVienRepository.findById(request.getCreatorId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên tạo mẫu với mã: " + request.getCreatorId()));
+        }
+
+        String dbType = "Email";
+        if (request.getType() != null) {
+            if (request.getType().equalsIgnoreCase("sms")) dbType = "SMS";
+            else if (request.getType().equalsIgnoreCase("zalo")) dbType = "Zalo";
+        }
+
+        entity.setTieuDe(request.getTitle());
+        entity.setNoiDung(request.getContent());
+        entity.setLoaiThongDiep(dbType);
+        entity.setNhanVienTao(creator);
+
+        MauThongDiep updated = mauThongDiepRepository.save(entity);
+        return convertToResponse(updated);
+    }
+
+    @Override
+    @Transactional
+    public void deleteTemplate(Integer id) {
+        if (!mauThongDiepRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Không tìm thấy mẫu thông điệp với mã: " + id);
+        }
+        mauThongDiepRepository.deleteById(id);
+    }
+
+    private MauThongDiepResponse convertToResponse(MauThongDiep entity) {
+        return MauThongDiepResponse.builder()
+                .id(entity.getMaMau())
+                .title(entity.getTieuDe())
+                .content(entity.getNoiDung())
+                .type(entity.getLoaiThongDiep())
+                .creatorId(entity.getNhanVienTao() != null ? entity.getNhanVienTao().getMaNhanVien() : null)
+                .creatorName(entity.getNhanVienTao() != null ? entity.getNhanVienTao().getHoTen() : "Hệ thống")
+                .useCount(entity.getLuotSuDung())
+                .createdDate(entity.getNgayTao())
+                .updatedDate(entity.getNgayCapNhat())
                 .build();
     }
 }

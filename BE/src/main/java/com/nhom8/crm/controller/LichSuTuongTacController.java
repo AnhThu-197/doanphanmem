@@ -57,4 +57,43 @@ public class LichSuTuongTacController {
         service.deleteInteraction(id);
         return ResponseEntity.noContent().build();
     }
+
+    // 6. Upload tệp đính kèm và gắn vào tương tác
+    @PostMapping("/{id}/files")
+    public ResponseEntity<com.nhom8.crm.dto.response.TepDinhKemResponse> uploadFile(
+            @PathVariable Integer id,
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        com.nhom8.crm.dto.response.TepDinhKemResponse response = service.uploadAttachment(id, file);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    // 7. Tải xuống tệp đính kèm bằng mã tệp (maTep)
+    @GetMapping("/files/{fileId}")
+    public ResponseEntity<org.springframework.core.io.Resource> downloadFile(@PathVariable Integer fileId, jakarta.servlet.http.HttpServletRequest request) {
+        org.springframework.core.io.Resource resource = service.downloadAttachment(fileId);
+
+        // Xác định kiểu nội dung của tệp
+        String contentType = null;
+        try {
+            contentType = request.getServletContext().getMimeType(resource.getFile().getAbsolutePath());
+        } catch (java.io.IOException ex) {
+            // Không xác định được kiểu file
+        }
+
+        if (contentType == null) {
+            contentType = "application/octet-stream";
+        }
+
+        return ResponseEntity.ok()
+                .contentType(org.springframework.http.MediaType.parseMediaType(contentType))
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                .body(resource);
+    }
+
+    // 8. Hủy liên kết tệp đính kèm khỏi tương tác (xóa mềm tệp)
+    @DeleteMapping("/{id}/files/{fileId}")
+    public ResponseEntity<Void> deleteFile(@PathVariable Integer id, @PathVariable Integer fileId) {
+        service.deleteAttachment(id, fileId);
+        return ResponseEntity.noContent().build();
+    }
 }
