@@ -2,13 +2,21 @@
 // TRANG QUẢN LÝ KHÁCH HÀNG
 // ============================================
 
+<<<<<<< HEAD
 async function loadCustomers() {
+=======
+function loadCustomers() {
+>>>>>>> origin/develop
     const mainContent = document.getElementById('mainContent');
     const user = AUTH.getCurrentUser();
     const canDelete = user && user.role !== 'employee';
     const isManagerOrAdmin = user && (user.role === 'manager' || user.role === 'admin');
+<<<<<<< HEAD
     
     await loadCustomersFromBackend();
+=======
+
+>>>>>>> origin/develop
     mainContent.innerHTML = `
         <h2 class="page-title">Quản lý Khách hàng</h2>
         <div class="tabs" style="margin-bottom: 20px;">
@@ -658,6 +666,7 @@ function confirmAssignCustomers(campaignId) {
     DATA.addAuditLog('ASSIGN_CUSTOMERS_TO_CAMPAIGN', `Gán ${ids.length} KH cho ${campaign.name}`, AUTH.getCurrentUser().id);
     closeModal('assignCustomersModal');
 }
+<<<<<<< HEAD
 // ============================================
 // BACKEND DATA MAPPING - GIỮ NGUYÊN GIAO DIỆN CŨ
 // ============================================
@@ -736,3 +745,5 @@ function removeVietnameseAccent(str) {
         .replace(/đ/g, 'd')
         .replace(/Đ/g, 'D');
 }
+=======
+>>>>>>> origin/develop

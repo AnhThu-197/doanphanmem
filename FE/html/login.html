@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập - Nhóm 8 CRM</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #fafafa; /* Off-white background */
+            position: relative;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+            letter-spacing: -0.01em;
+        }
+        
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e4e4e7; /* Zinc 200 */
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+            padding: 40px 32px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Hide the colorful left column for absolute minimalism */
+        .login-left {
+            display: none !important;
+        }
+        
+        .login-right {
+            width: 100%;
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        
+        .login-header h1 {
+            color: #18181b; /* Zinc 900 */
+            margin-bottom: 6px;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        
+        .login-header p {
+            color: #71717a; /* Zinc 500 */
+            font-size: 13px;
+        }
+        
+        .error-message {
+            color: #991b1b; /* Zinc/Red custom danger text */
+            font-size: 12.5px;
+            margin-bottom: 16px;
+            padding: 10px 14px;
+            background: #fef2f2;
+            border-radius: 6px;
+            display: none;
+            border: 1px solid #fecaca;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .form-group label {
+            display: block;
+            color: #18181b;
+            font-weight: 500;
+            font-size: 13px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #e4e4e7;
+            border-radius: 6px;
+            font-size: 13.5px;
+            transition: all 0.15s ease-out;
+            background: #fafafa;
+            color: #18181b;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #18181b;
+            background: #ffffff;
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 11px;
+            background: #18181b; /* Zinc 900 */
+            color: white;
+            border: 1px solid #18181b;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease-out;
+            font-size: 13.5px;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .login-btn:hover {
+            background: #27272a; /* Zinc 800 */
+            border-color: #27272a;
+        }
+        
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            position: relative;
+        }
+        
+        .divider::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 100%;
+            height: 1px;
+            background: #e4e4e7;
+        }
+        
+        .divider span {
+            background: white;
+            padding: 0 10px;
+            color: #71717a;
+            font-size: 11.5px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .demo-users {
+            margin-top: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .demo-btn {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 9px 14px;
+            background: #ffffff;
+            border: 1px solid #e4e4e7;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12.5px;
+            transition: all 0.15s ease-out;
+            color: #27272a;
+            font-weight: 500;
+            text-align: left;
+        }
+        
+        .demo-btn:hover {
+            background: #f4f4f5;
+            border-color: #d4d4d8;
+            color: #18181b;
+        }
+        
+        .demo-btn i {
+            margin-right: 10px;
+            width: 16px;
+            text-align: center;
+            color: #71717a;
+        }
+        
+        @media (max-width: 480px) {
+            .login-container {
+                border-radius: 0;
+                border: none;
+                box-shadow: none;
+                padding: 24px 16px;
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-left">
+            <h2>Quản lý Khách hàng Hiệu quả & Chuyên nghiệp</h2>
+            <p>Hệ thống CRM toàn diện giúp doanh nghiệp quản lý khách hàng, chiến dịch marketing và tối ưu hiệu suất kinh doanh.</p>
+            
+            <div class="features">
+                <div class="feature-item">
+                    <i class="fas fa-users"></i>
+                    <span>Quản lý khách hàng tập trung</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Phân tích & Báo cáo chi tiết</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-bullhorn"></i>
+                    <span>Chiến dịch Marketing thông minh</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="login-right">
+            <div class="login-header">
+                <h1>Đăng nhập</h1>
+                <p>Chào mừng trở lại với CRM System</p>
+            </div>
+            
+            <div class="error-message" id="errorMsg"></div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Email đăng nhập</label>
+                    <input type="text" id="username" name="username" placeholder="Nhập email đăng nhập" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Mật khẩu</label>
+                    <input type="password" id="password" name="password" placeholder="Nhập mật khẩu" required>
+                </div>
+                
+                <div style="text-align: right; margin-bottom: 14px;">
+                    <a href="#" onclick="openForgotPasswordModal(); return false;" style="color: #18181b; font-size: 12px; text-decoration: none; font-weight: 500;">
+                        <i class="fas fa-key"></i> Quên mật khẩu?
+                    </a>
+                </div>
+                
+                <button type="submit" class="login-btn">
+                    <i class="fas fa-sign-in-alt"></i> Đăng nhập
+                </button>
+            </form>
+            
+            <div class="divider">
+                <span>Hoặc dùng tài khoản demo</span>
+            </div>
+            
+            <div class="demo-users">
+                <button type="button" class="demo-btn" onclick="demoLogin('nv01@crm.vn', 'nv01123')">
+                    <i class="fas fa-user"></i> Nhân viên Marketing
+                </button>
+                <button type="button" class="demo-btn" onclick="demoLogin('anhthu@gmail.com', 'tp123')">
+                    <i class="fas fa-user-tie"></i> Trưởng phòng Marketing
+                </button>
+                <button type="button" class="demo-btn" onclick="demoLogin('admin@gmail.com', 'admin123')">
+                    <i class="fas fa-user-shield"></i> Quản trị viên
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Quên mật khẩu -->
+    <div id="forgotPasswordModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); backdrop-filter: blur(4px); overflow: auto;">
+        <div style="background-color: #ffffff; margin: 8% auto; padding: 0; border-radius: 12px; width: 90%; max-width: 500px; border: 1px solid #e4e4e7; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.05);">
+            <div style="background: #ffffff; color: #18181b; padding: 20px; border-bottom: 1px solid #e4e4e7; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="margin: 0; font-size: 18px; font-weight: 600; letter-spacing: -0.02em;">
+                    <i class="fas fa-key" style="color: #71717a;"></i> Quên mật khẩu
+                </h2>
+                <button onclick="closeForgotPasswordModal()" style="background: none; border: none; color: #71717a; font-size: 20px; cursor: pointer; padding: 0; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background 0.15s;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <!-- Progress Steps -->
+            <div style="padding: 20px 25px 10px; background: #fafafa; border-bottom: 1px solid #e4e4e7;">
+                <div style="display: flex; justify-content: space-between; align-items: center; position: relative;">
+                    <div style="position: absolute; top: 15px; left: 0; right: 0; height: 2px; background: #e4e4e7; z-index: 0;"></div>
+                    <div id="progressLine" style="position: absolute; top: 15px; left: 0; height: 2px; background: #18181b; z-index: 0; width: 0%; transition: width 0.3s;"></div>
+                    
+                    <div style="text-align: center; flex: 1; position: relative; z-index: 1;">
+                        <div id="step1Circle" style="width: 32px; height: 32px; border-radius: 50%; background: #18181b; color: white; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-weight: 600; font-size: 14px; transition: all 0.3s;">1</div>
+                        <div style="font-size: 11px; color: #18181b; font-weight: 600;">Nhập Email</div>
+                    </div>
+                    <div style="text-align: center; flex: 1; position: relative; z-index: 1;">
+                        <div id="step2Circle" style="width: 32px; height: 32px; border-radius: 50%; background: #e4e4e7; color: #71717a; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-weight: 600; font-size: 14px; transition: all 0.3s;">2</div>
+                        <div id="step2Text" style="font-size: 11px; color: #71717a; font-weight: 600;">Xác thực OTP</div>
+                    </div>
+                    <div style="text-align: center; flex: 1; position: relative; z-index: 1;">
+                        <div id="step3Circle" style="width: 32px; height: 32px; border-radius: 50%; background: #e4e4e7; color: #71717a; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-weight: 600; font-size: 14px; transition: all 0.3s;">3</div>
+                        <div id="step3Text" style="font-size: 11px; color: #71717a; font-weight: 600;">Mật khẩu mới</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="padding: 25px;">
+                <!-- Bước 1: Nhập Email -->
+                <form id="step1Form" style="display: block;">
+                    <p style="color: #71717a; font-size: 13px; margin-bottom: 20px; line-height: 1.5;">
+                        <i class="fas fa-info-circle" style="color: #71717a;"></i> Nhập email của bạn để nhận mã OTP xác thực.
+                    </p>
+                    <div class="form-group">
+                        <label for="resetEmail" style="display: block; margin-bottom: 6px; color: #18181b; font-weight: 500; font-size: 13px;">Email *</label>
+                        <input type="email" id="resetEmail" required style="width: 100%; padding: 10px 12px; border: 1px solid #e4e4e7; border-radius: 6px; font-size: 13.5px; background: #fafafa;">
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="button" onclick="closeForgotPasswordModal()" style="flex: 1; padding: 10px; background: #f4f4f5; color: #27272a; border: 1px solid #e4e4e7; border-radius: 6px; font-weight: 500; cursor: pointer; font-size: 13px; transition: all 0.15s ease-out;">
+                            Hủy
+                        </button>
+                        <button type="submit" style="flex: 1; padding: 10px; background: #18181b; color: white; border: 1px solid #18181b; border-radius: 6px; font-weight: 500; cursor: pointer; font-size: 13px; transition: all 0.15s ease-out;">
+                            <i class="fas fa-paper-plane"></i> Gửi mã OTP
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Bước 2: Nhập OTP -->
+                <form id="step2Form" style="display: none;">
+                    <p style="color: #71717a; font-size: 13px; margin-bottom: 20px; line-height: 1.5;">
+                        <i class="fas fa-envelope" style="color: #18181b;"></i> Mã OTP đã được gửi đến email: <strong id="displayEmail" style="color: #18181b;"></strong>
+                    </p>
+                    <div class="form-group">
+                        <label for="otpCode" style="display: block; margin-bottom: 6px; color: #18181b; font-weight: 500; font-size: 13px;">Mã OTP (6 số) *</label>
+                        <input type="text" id="otpCode" required maxlength="6" pattern="[0-9]{6}" placeholder="Nhập 6 số" style="width: 100%; padding: 10px 12px; border: 1px solid #e4e4e7; border-radius: 6px; font-size: 18px; background: #fafafa; text-align: center; letter-spacing: 8px; font-weight: 600; color: #18181b;">
+                        <small style="color: #71717a; font-size: 11px; display: block; margin-top: 8px;">
+                            Mã OTP có hiệu lực trong 5 phút. 
+                            <a href="#" onclick="resendOTP(); return false;" style="color: #18181b; font-weight: 600; text-decoration: underline;">Gửi lại mã</a>
+                        </small>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="button" onclick="backToStep1()" style="flex: 1; padding: 10px; background: #f4f4f5; color: #27272a; border: 1px solid #e4e4e7; border-radius: 6px; font-weight: 500; cursor: pointer; font-size: 13px; transition: all 0.15s ease-out;">
+                            <i class="fas fa-arrow-left"></i> Quay lại
+                        </button>
+                        <button type="submit" style="flex: 1; padding: 10px; background: #18181b; color: white; border: 1px solid #18181b; border-radius: 6px; font-weight: 500; cursor: pointer; font-size: 13px; transition: all 0.15s ease-out;">
+                            <i class="fas fa-check"></i> Xác thực
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Bước 3: Đặt mật khẩu mới -->
+                <form id="step3Form" style="display: none;">
+                    <p style="color: #166534; font-size: 13px; margin-bottom: 20px; line-height: 1.5; background: #f0fdf4; padding: 10px 14px; border-radius: 6px; border: 1px solid #bbf7d0;">
+                        <i class="fas fa-check-circle"></i> Xác thực thành công! Vui lòng đặt mật khẩu mới.
+                    </p>
+                    <div class="form-group">
+                        <label for="newPassword" style="display: block; margin-bottom: 6px; color: #18181b; font-weight: 500; font-size: 13px;">Mật khẩu mới *</label>
+                        <input type="password" id="newPassword" required minlength="6" placeholder="Tối thiểu 6 ký tự" style="width: 100%; padding: 10px 12px; border: 1px solid #e4e4e7; border-radius: 6px; font-size: 13.5px; background: #fafafa;">
+                    </div>
+                    <div class="form-group" style="margin-top: 14px;">
+                        <label for="confirmNewPassword" style="display: block; margin-bottom: 6px; color: #18181b; font-weight: 500; font-size: 13px;">Xác nhận mật khẩu *</label>
+                        <input type="password" id="confirmNewPassword" required minlength="6" placeholder="Nhập lại mật khẩu" style="width: 100%; padding: 10px 12px; border: 1px solid #e4e4e7; border-radius: 6px; font-size: 13.5px; background: #fafafa;">
+                    </div>
+                    <div style="background: #f4f4f5; padding: 12px; border-radius: 6px; margin-top: 14px; border: 1px solid #e4e4e7;">
+                        <div style="font-size: 12px; color: #27272a; font-weight: 600; margin-bottom: 6px;">Yêu cầu mật khẩu:</div>
+                        <ul style="margin: 0; padding-left: 20px; font-size: 11.5px; color: #71717a;">
+                            <li>Tối thiểu 6 ký tự</li>
+                            <li>Nên có chữ hoa, chữ thường và số</li>
+                            <li>Không sử dụng mật khẩu dễ đoán</li>
+                        </ul>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="button" onclick="closeForgotPasswordModal()" style="flex: 1; padding: 10px; background: #f4f4f5; color: #27272a; border: 1px solid #e4e4e7; border-radius: 6px; font-weight: 500; cursor: pointer; font-size: 13px; transition: all 0.15s ease-out;">
+                            Hủy
+                        </button>
+                        <button type="submit" style="flex: 1; padding: 10px; background: #18181b; color: white; border: 1px solid #18181b; border-radius: 6px; font-weight: 500; cursor: pointer; font-size: 13px; transition: all 0.15s ease-out;">
+                            <i class="fas fa-save"></i> Đặt mật khẩu
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/api/api-config.js"></script>
+    <script src="../js/api/api-endpoints.js"></script>
+    <script src="../js/api/api-client.js"></script>
+    <script src="../js/api/api-services.js"></script>
+    <script src="../js/auth.js"></script>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            performLogin(username, password);
+        });
+        
+        function demoLogin(username, password) {
+            document.getElementById('username').value = username;
+            document.getElementById('password').value = password;
+            performLogin(username, password);
+        }
+        
+        async function performLogin(username, password) {
+            const loginBtn = document.querySelector('.login-btn');
+            const errorMsg = document.getElementById('errorMsg');
+
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang đăng nhập...';
+            errorMsg.style.display = 'none';
+
+            let result = await AUTH.loginApi(username, password);
+
+            // Fallback cho tài khoản demo mock cũ nếu BE chưa có user tương ứng.
+            if (!result.success) {
+                result = AUTH.login(username, password);
+            }
+
+            if (result.success) {
+                window.location.href = 'dashboard.html';
+            } else {
+                errorMsg.textContent = result.message;
+                errorMsg.style.display = 'block';
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Đăng nhập';
+            }
+        }
+        
+        function openForgotPasswordModal() {
+            document.getElementById('forgotPasswordModal').style.display = 'block';
+            resetForgotPasswordFlow();
+        }
+        
+        function closeForgotPasswordModal() {
+            document.getElementById('forgotPasswordModal').style.display = 'none';
+            resetForgotPasswordFlow();
+        }
+        
+        function resetForgotPasswordFlow() {
+            // Reset về bước 1
+            document.getElementById('step1Form').style.display = 'block';
+            document.getElementById('step2Form').style.display = 'none';
+            document.getElementById('step3Form').style.display = 'none';
+            
+            // Reset progress
+            updateProgress(1);
+            
+            // Clear inputs
+            document.getElementById('resetEmail').value = '';
+            document.getElementById('otpCode').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmNewPassword').value = '';
+        }
+        
+        function updateProgress(step) {
+            // Update progress line
+            const progressLine = document.getElementById('progressLine');
+            if (step === 1) {
+                progressLine.style.width = '0%';
+            } else if (step === 2) {
+                progressLine.style.width = '50%';
+            } else if (step === 3) {
+                progressLine.style.width = '100%';
+            }
+            
+            // Update step 1
+            const step1Circle = document.getElementById('step1Circle');
+            if (step >= 1) {
+                step1Circle.style.background = '#18181b';
+                step1Circle.style.color = 'white';
+            }
+            
+            // Update step 2
+            const step2Circle = document.getElementById('step2Circle');
+            const step2Text = document.getElementById('step2Text');
+            if (step >= 2) {
+                step2Circle.style.background = '#18181b';
+                step2Circle.style.color = 'white';
+                step2Text.style.color = '#18181b';
+            } else {
+                step2Circle.style.background = '#e4e4e7';
+                step2Circle.style.color = '#71717a';
+                step2Text.style.color = '#71717a';
+            }
+            
+            // Update step 3
+            const step3Circle = document.getElementById('step3Circle');
+            const step3Text = document.getElementById('step3Text');
+            if (step >= 3) {
+                step3Circle.style.background = '#18181b';
+                step3Circle.style.color = 'white';
+                step3Text.style.color = '#18181b';
+            } else {
+                step3Circle.style.background = '#e4e4e7';
+                step3Circle.style.color = '#71717a';
+                step3Text.style.color = '#71717a';
+            }
+        }
+        
+        // Bước 1: Gửi email
+        document.getElementById('step1Form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('resetEmail').value;
+            
+            // Giả lập gửi OTP
+            const otpCode = Math.floor(100000 + Math.random() * 900000); // Tạo mã OTP 6 số
+            console.log('OTP Code:', otpCode); // Trong thực tế sẽ gửi qua email
+            
+            // Lưu OTP vào sessionStorage để kiểm tra (demo)
+            sessionStorage.setItem('resetOTP', otpCode);
+            sessionStorage.setItem('resetEmail', email);
+            
+            // Chuyển sang bước 2
+            document.getElementById('step1Form').style.display = 'none';
+            document.getElementById('step2Form').style.display = 'block';
+            document.getElementById('displayEmail').textContent = email;
+            updateProgress(2);
+            
+            alert('✓ Mã OTP đã được gửi đến email: ' + email + '\n\n(Demo: Mã OTP là ' + otpCode + ')');
+        });
+        
+        // Bước 2: Xác thực OTP
+        document.getElementById('step2Form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const enteredOTP = document.getElementById('otpCode').value;
+            const correctOTP = sessionStorage.getItem('resetOTP');
+            
+            if (enteredOTP === correctOTP) {
+                // OTP đúng, chuyển sang bước 3
+                document.getElementById('step2Form').style.display = 'none';
+                document.getElementById('step3Form').style.display = 'block';
+                updateProgress(3);
+            } else {
+                alert('❌ Mã OTP không chính xác. Vui lòng thử lại.');
+            }
+        });
+        
+        // Bước 3: Đặt mật khẩu mới
+        document.getElementById('step3Form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmNewPassword').value;
+            
+            if (newPassword.length < 6) {
+                alert('❌ Mật khẩu phải có tối thiểu 6 ký tự.');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                alert('❌ Mật khẩu xác nhận không khớp. Vui lòng thử lại.');
+                return;
+            }
+            
+            // Giả lập cập nhật mật khẩu
+            const email = sessionStorage.getItem('resetEmail');
+            alert('✓ Đặt mật khẩu mới thành công!\n\nEmail: ' + email + '\nBạn có thể đăng nhập với mật khẩu mới.');
+            
+            // Xóa session
+            sessionStorage.removeItem('resetOTP');
+            sessionStorage.removeItem('resetEmail');
+            
+            // Đóng modal
+            closeForgotPasswordModal();
+        });
+        
+        function backToStep1() {
+            document.getElementById('step2Form').style.display = 'none';
+            document.getElementById('step1Form').style.display = 'block';
+            updateProgress(1);
+        }
+        
+        function resendOTP() {
+            const email = sessionStorage.getItem('resetEmail');
+            const otpCode = Math.floor(100000 + Math.random() * 900000);
+            sessionStorage.setItem('resetOTP', otpCode);
+            console.log('New OTP Code:', otpCode);
+            alert('✓ Đã gửi lại mã OTP mới đến email: ' + email + '\n\n(Demo: Mã OTP mới là ' + otpCode + ')');
+        }
+        
+        // Đóng modal khi click bên ngoài
+        window.onclick = function(event) {
+            const modal = document.getElementById('forgotPasswordModal');
+            if (event.target == modal) {
+                closeForgotPasswordModal();
+            }
+        }
+    </script>
+</body>
+</html>
