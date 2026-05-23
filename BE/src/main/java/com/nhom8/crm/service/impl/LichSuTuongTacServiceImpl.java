@@ -230,7 +230,7 @@ public class LichSuTuongTacServiceImpl implements LichSuTuongTacService {
                 throw new ResourceNotFoundException("Không tìm thấy tệp vật lý trên máy chủ: " + tep.getTenTep());
             }
         } catch (Exception ex) {
-            throw new ResourceNotFoundException("Lỗi tải tệp: " + tep.getTenTep(), ex);
+            throw new RuntimeException("Lỗi tải tệp: " + tep.getTenTep(), ex);
         }
     }
 
