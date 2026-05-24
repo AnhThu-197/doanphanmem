@@ -392,6 +392,21 @@ CREATE TABLE LichSuXuatDuLieu (
     CONSTRAINT CHK_DinhDang CHECK (dinhDang IN (N'Excel', N'CSV', N'PDF'))
 );
 
+-- 27. Bảng Lịch sử phân bổ khách hàng 
+CREATE TABLE LichSuPhanBoKhachHang (
+    maLichSuPhanBo INT IDENTITY(1,1) PRIMARY KEY,
+    maKhachHang INT NOT NULL,
+    maNhanVien INT NOT NULL,
+    phuongPhap NVARCHAR(50) NOT NULL,
+    ngayPhanBo DATETIME NOT NULL DEFAULT GETDATE(),
+
+    CONSTRAINT FK_LSPB_KhachHang 
+        FOREIGN KEY (maKhachHang) REFERENCES KhachHang(maKhachHang),
+
+    CONSTRAINT FK_LSPB_NhanVien 
+        FOREIGN KEY (maNhanVien) REFERENCES NhanVien(maNhanVien)
+);
+GO
 -- ================================================================
 -- KIỂM TRA RÀNG BUỘC
 -- ================================================================
@@ -546,6 +561,32 @@ INSERT INTO KhachHang (maNguoiPhuTrach, maNganhNghe, maNguonKH, maPhuongXa, hoTe
 (4, 3, 3, 3, N'Trần Thị Cẩm', 'cam@shop.vn', '0911000003', N'Nữ', '1995-07-20', N'Shop Online', N'Chủ shop', N'KH chính thức', 80, NULL, 0, N'Đã chuyển đổi'), 
 (4, 4, 4, 1, N'Lê Hoàng Dũng', 'dung@edu.vn', '0911000004', N'Nam', '1985-11-01', N'Trường ABC', N'Hiệu trưởng', N'KH tiềm năng mới', 10, GETDATE(), 7, N'Đang dùng thử'), 
 (3, 5, 5, 2, N'Phạm Thị Em', 'em@clinic.vn', '0911000005', N'Nữ', '1992-09-25', N'Phòng khám', N'Bác sĩ', N'KH triển vọng', 35, GETDATE(), 21, N'Đang dùng thử');
+
+-- Dữ liệu lịch sử phân bổ ban đầu cho khách hàng mẫu
+INSERT INTO LichSuPhanBoKhachHang (
+    maKhachHang,
+    maNhanVien,
+    phuongPhap,
+    ngayPhanBo
+)
+SELECT 
+    kh.maKhachHang,
+    kh.maNguoiPhuTrach,
+    N'old_data',
+    ISNULL(kh.ngayCapNhat, GETDATE())
+FROM KhachHang kh
+JOIN NhanVien nv ON kh.maNguoiPhuTrach = nv.maNhanVien
+JOIN TaiKhoan tk ON nv.maTaiKhoan = tk.maTaiKhoan
+JOIN VaiTro vt ON tk.maVaiTro = vt.maVaiTro
+WHERE kh.daXoa = 0
+  AND kh.maNguoiPhuTrach IS NOT NULL
+  AND vt.tenVaiTro = N'EMPLOYEE'
+  AND NOT EXISTS (
+      SELECT 1
+      FROM LichSuPhanBoKhachHang ls
+      WHERE ls.maKhachHang = kh.maKhachHang
+  );
+GO
 
 -- Dữ liệu Chiến Dịch
 INSERT INTO ChienDich (maNguoiQuanLy, tenChienDich, moTa, loaiChienDich, ngayBatDau, ngayKetThuc, nganSach,doanhThuThucTe, trangThaiChienDich) VALUES
@@ -836,12 +877,30 @@ BEGIN
     DECLARE @maKHMoi INT = SCOPE_IDENTITY();
 
     -- Gửi thông báo cho nhân viên phụ trách
+    -- Nếu khi thêm khách hàng đã có người phụ trách thì ghi lịch sử phân bổ
     IF @maNguoiPhuTrach IS NOT NULL
+    BEGIN
+        INSERT INTO LichSuPhanBoKhachHang (
+            maKhachHang,
+            maNhanVien,
+            phuongPhap,
+            ngayPhanBo
+        )
+        VALUES (
+            @maKHMoi,
+            @maNguoiPhuTrach,
+            N'old_data',
+            GETDATE()
+        );
+
         INSERT INTO ThongBao (maNhanVien, tieuDe, noiDung, loaiThongBao)
-        VALUES (@maNguoiPhuTrach,
-                N'Khách hàng mới được phân công',
-                N'Bạn vừa được phân công phụ trách khách hàng: ' + @hoTen,
-                N'Phân công');
+        VALUES (
+            @maNguoiPhuTrach,
+            N'Khách hàng mới được phân công',
+            N'Bạn vừa được phân công phụ trách khách hàng: ' + @hoTen,
+            N'Phân công'
+        );
+    END
 
     SELECT N'OK' AS KetQua, N'Thêm khách hàng thành công.' AS ThongBao,
            @maKHMoi AS maKhachHang;
@@ -965,76 +1024,85 @@ GO
 -- ----------------------------------------------------------------
 CREATE PROCEDURE sp_PhanBoKhachHang
     @maKhachHang    INT,
-    @maNhanVienMoi  INT = NULL
+    @maNhanVienMoi  INT = NULL,
+    @phuongPhap     NVARCHAR(50) = N'round_robin'
 AS
 BEGIN
     SET NOCOUNT ON;
 
     DECLARE @maNVDuoc INT = @maNhanVienMoi;
 
-    -- Phân bổ tự động: chọn nhân viên đang có ít khách hàng nhất
+    -- Nếu không truyền nhân viên cụ thể thì tự chọn nhân viên có ít khách nhất
     IF @maNVDuoc IS NULL
     BEGIN
         SELECT TOP 1 @maNVDuoc = nv.maNhanVien
         FROM NhanVien nv
         JOIN TaiKhoan tk ON nv.maTaiKhoan = tk.maTaiKhoan
+        JOIN VaiTro vt ON tk.maVaiTro = vt.maVaiTro
         WHERE tk.trangThai = N'Hoạt động'
+          AND vt.tenVaiTro = N'EMPLOYEE'
         ORDER BY dbo.fn_SoKhachHangPhuTrach(nv.maNhanVien) ASC;
     END
 
+    -- Không tìm được nhân viên phù hợp
     IF @maNVDuoc IS NULL
     BEGIN
         SELECT N'Lỗi' AS KetQua, N'Không có nhân viên khả dụng để phân bổ.' AS ThongBao;
         RETURN;
     END
 
+    -- Kiểm tra khách hàng tồn tại và chưa bị xóa
     DECLARE @hoTenKH NVARCHAR(100);
-    SELECT @hoTenKH = hoTen FROM KhachHang WHERE maKhachHang = @maKhachHang;
+
+    SELECT @hoTenKH = hoTen
+    FROM KhachHang
+    WHERE maKhachHang = @maKhachHang
+      AND daXoa = 0;
 
     IF @hoTenKH IS NULL
     BEGIN
-        SELECT N'Lỗi' AS KetQua, N'Khách hàng không tồn tại.' AS ThongBao;
+        SELECT N'Lỗi' AS KetQua, N'Khách hàng không tồn tại hoặc đã bị xóa.' AS ThongBao;
         RETURN;
     END
 
+    -- Cập nhật người phụ trách cho khách hàng
     UPDATE KhachHang
-    SET    maNguoiPhuTrach = @maNVDuoc,
-           ngayCapNhat     = GETDATE()
-    WHERE  maKhachHang = @maKhachHang;
+    SET maNguoiPhuTrach = @maNVDuoc,
+        ngayCapNhat = GETDATE()
+    WHERE maKhachHang = @maKhachHang
+      AND daXoa = 0;
 
-    -- chỉ sửa dòng này
+    -- Ghi lịch sử phân bổ
+    INSERT INTO LichSuPhanBoKhachHang (
+        maKhachHang,
+        maNhanVien,
+        phuongPhap,
+        ngayPhanBo
+    )
+    VALUES (
+        @maKhachHang,
+        @maNVDuoc,
+        @phuongPhap,
+        GETDATE()
+    );
+
+    -- Gửi thông báo cho nhân viên được phân công
     INSERT INTO ThongBao (maNhanVien, tieuDe, noiDung, loaiThongBao)
-    VALUES (@maNVDuoc,
-            N'Khách hàng mới được phân công',
-            N'Bạn được phân công phụ trách khách hàng: ' + ISNULL(@hoTenKH, N'[Không xác định]'),
-            N'Phân công');
+    VALUES (
+        @maNVDuoc,
+        N'Khách hàng mới được phân công',
+        N'Bạn được phân công phụ trách khách hàng: ' + ISNULL(@hoTenKH, N'[Không xác định]'),
+        N'Phân công'
+    );
 
-    SELECT N'OK' AS KetQua, N'Phân bổ thành công.' AS ThongBao,
-           @maNVDuoc AS maNhanVienDuocPhanCong;
+    SELECT 
+        N'OK' AS KetQua,
+        N'Phân bổ thành công.' AS ThongBao,
+        @maNVDuoc AS maNhanVienDuocPhanCong,
+        @phuongPhap AS phuongPhap;
 END;
 GO
 
--- TEST SP03: sp_PhanBoKhachHang
-PRINT N'===== TEST SP03: sp_PhanBoKhachHang =====';
-
-EXEC sp_PhanBoKhachHang
-    @maKhachHang = 4,
-    @maNhanVienMoi = 3;
-GO
-
--- Kiểm tra khách hàng đã được phân bổ
-SELECT maKhachHang, hoTen, maNguoiPhuTrach, ngayCapNhat
-FROM KhachHang
-WHERE maKhachHang = 4;
-GO
-
--- Kiểm tra thông báo phân công
-SELECT TOP 5 *
-FROM ThongBao
-WHERE maNhanVien = 3
-  AND noiDung LIKE N'%Lê Hoàng Dũng%'
-ORDER BY maThongBao DESC;
-GO
 
 -- ----------------------------------------------------------------
 -- SP04: Tạo chiến dịch marketing

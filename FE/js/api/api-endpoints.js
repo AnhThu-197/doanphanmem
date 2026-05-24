@@ -11,6 +11,10 @@ const API_ENDPOINTS = {
         me: '/profile/me',
         update: '/profile/me'
     },
+ 
+    nhanVien: {
+    list: '/nhan-vien'
+    },
 
     khachHang: {
         list: '/khach-hang',
@@ -19,6 +23,8 @@ const API_ENDPOINTS = {
         create: '/khach-hang',
         update: (id) => `/khach-hang/${id}`,
         delete: (id) => `/khach-hang/${id}`,
+        assign: (id) => `/khach-hang/${id}/phan-bo`,
+        assignmentHistory: '/khach-hang/lich-su-phan-bo',
         trash: '/khach-hang/thung-rac',
         restore: (id) => `/khach-hang/${id}/khoi-phuc`
     },

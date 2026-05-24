@@ -64,7 +64,13 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/bao-cao/tong-quan").authenticated()
                 // Manager + Admin
                 .requestMatchers("/bao-cao/**").hasAnyRole("ADMIN", "MANAGER")
-                // All authenticated users
+                    // Tạm mở quyền để test API phân bổ khách hàng trên Swagger
+                    .requestMatchers(HttpMethod.PATCH, "/khach-hang/*/phan-bo").hasAnyRole("ADMIN", "MANAGER")
+                    // Tạm mở để test danh sách nhân viên trên Swagger
+                    .requestMatchers(HttpMethod.GET, "/nhan-vien").permitAll()
+
+                    .requestMatchers(HttpMethod.GET, "/khach-hang/lich-su-phan-bo").hasAnyRole("ADMIN", "MANAGER")
+                    // All authenticated users
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter,

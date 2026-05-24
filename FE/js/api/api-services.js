@@ -18,6 +18,11 @@ const API_SERVICES = {
             API_CLIENT.put(API_ENDPOINTS.profile.update, payload)
     },
 
+    nhanVien: {
+    list: () =>
+        API_CLIENT.get(API_ENDPOINTS.nhanVien.list)
+    },
+
     khachHang: {
         list: () =>
             API_CLIENT.get(API_ENDPOINTS.khachHang.list),
@@ -31,6 +36,10 @@ const API_SERVICES = {
             API_CLIENT.put(API_ENDPOINTS.khachHang.update(id), payload),
         delete: (id, lyDo) =>
             API_CLIENT.delete(API_ENDPOINTS.khachHang.delete(id), lyDo ? { lyDo } : null),
+        assign: (id, payload) =>
+            API_CLIENT.patch(API_ENDPOINTS.khachHang.assign(id), payload),
+        assignmentHistory: () =>
+            API_CLIENT.get(API_ENDPOINTS.khachHang.assignmentHistory),
         trash: () =>
             API_CLIENT.get(API_ENDPOINTS.khachHang.trash),
         restore: (id) =>

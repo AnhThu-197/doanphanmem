@@ -2,14 +2,15 @@ package com.nhom8.crm.service;
 
 import com.nhom8.crm.dto.request.KhachHangRequest;
 import com.nhom8.crm.dto.response.KhachHangResponse;
+import com.nhom8.crm.dto.response.LichSuPhanBoResponse;
 import com.nhom8.crm.entity.*;
-import com.nhom8.crm.exception.BadRequestException;
 import com.nhom8.crm.exception.ResourceNotFoundException;
 import com.nhom8.crm.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -115,6 +116,68 @@ public class KhachHangService {
         khachHangRepository.save(kh);
     }
 
+    @Transactional
+    public void phanBoKhachHang(Integer maKhachHang, Integer maNhanVienMoi, String phuongPhap) {
+        if (maNhanVienMoi == null) {
+            entityManager
+                    .createNativeQuery("EXEC sp_PhanBoKhachHang @maKhachHang = :maKhachHang, @maNhanVienMoi = NULL, @phuongPhap = :phuongPhap")
+                    .setParameter("maKhachHang", maKhachHang)
+                    .setParameter("phuongPhap", phuongPhap)
+                    .getResultList();
+        } else {
+            entityManager
+                    .createNativeQuery("EXEC sp_PhanBoKhachHang @maKhachHang = :maKhachHang, @maNhanVienMoi = :maNhanVienMoi, @phuongPhap = :phuongPhap")
+                    .setParameter("maKhachHang", maKhachHang)
+                    .setParameter("maNhanVienMoi", maNhanVienMoi)
+                    .setParameter("phuongPhap", phuongPhap)
+                    .getResultList();
+        }
+    }
+
+    public List<LichSuPhanBoResponse> getLichSuPhanBo() {
+        String sql = """
+            SELECT 
+                ls.maLichSuPhanBo,
+                kh.maKhachHang,
+                kh.hoTen AS tenKhachHang,
+                nv.maNhanVien,
+                nv.hoTen AS tenNhanVien,
+                ls.phuongPhap,
+                ls.ngayPhanBo
+            FROM LichSuPhanBoKhachHang ls
+            JOIN KhachHang kh ON ls.maKhachHang = kh.maKhachHang
+            JOIN NhanVien nv ON ls.maNhanVien = nv.maNhanVien
+            JOIN TaiKhoan tk ON nv.maTaiKhoan = tk.maTaiKhoan
+            JOIN VaiTro vt ON tk.maVaiTro = vt.maVaiTro
+            JOIN NhanVien nvHienTai ON kh.maNguoiPhuTrach = nvHienTai.maNhanVien
+            JOIN TaiKhoan tkHienTai ON nvHienTai.maTaiKhoan = tkHienTai.maTaiKhoan
+            JOIN VaiTro vtHienTai ON tkHienTai.maVaiTro = vtHienTai.maVaiTro
+            WHERE kh.daXoa = 0
+              AND vt.tenVaiTro = N'EMPLOYEE'
+              AND vtHienTai.tenVaiTro = N'EMPLOYEE'
+            ORDER BY ls.ngayPhanBo DESC
+        """;
+
+        List<Object[]> rows = entityManager.createNativeQuery(sql).getResultList();
+
+        return rows.stream()
+                .map(row -> LichSuPhanBoResponse.builder()
+                        .maLichSuPhanBo(((Number) row[0]).intValue())
+                        .maKhachHang(((Number) row[1]).intValue())
+                        .tenKhachHang((String) row[2])
+                        .maNhanVien(((Number) row[3]).intValue())
+                        .tenNhanVien((String) row[4])
+                        .phuongPhap((String) row[5])
+                        .ngayPhanBo(
+                                row[6] instanceof Timestamp
+                                        ? ((Timestamp) row[6]).toLocalDateTime()
+                                        : row[6] instanceof LocalDateTime
+                                          ? (LocalDateTime) row[6]
+                                          : null
+                        )
+                        .build())
+                .toList();
+    }
     @Transactional
     public void restore(Integer id) {
         KhachHang kh = khachHangRepository.findById(id)

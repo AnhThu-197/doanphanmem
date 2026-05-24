@@ -252,6 +252,7 @@ async function loadDashboard() {
                 ? customersRes.data
                 : (customersRes.data?.content ?? customersRes.data ?? []);
             mainContent.innerHTML = renderDashboardHTML(stats, customers, user);
+            initDashboardSearch(customers);
             return;
         } catch (err) {
             console.error('[Dashboard] Lỗi tải dữ liệu:', err);
@@ -298,6 +299,7 @@ async function loadDashboard() {
         trangThaiKhach: getStatusLabel(c.status)
     })) : [];
     mainContent.innerHTML = renderDashboardHTML(stats, customers, user);
+    initDashboardSearch(customers);
 }
 
 function loadAdminDashboard() {
@@ -427,4 +429,91 @@ function loadAdminDashboard() {
             `}
         </div>
     `;
+}
+let DASHBOARD_CUSTOMERS_CACHE = [];
+
+function initDashboardSearch(customers) {
+    DASHBOARD_CUSTOMERS_CACHE = Array.isArray(customers) ? customers : [];
+
+    const searchInput = document.getElementById('searchInput');
+    if (!searchInput) return;
+
+    searchInput.oninput = function () {
+        const keyword = removeVietnameseAccentForDashboardSearch(searchInput.value);
+
+        let filtered = DASHBOARD_CUSTOMERS_CACHE;
+
+        if (keyword) {
+            filtered = DASHBOARD_CUSTOMERS_CACHE.filter(c => {
+                const name = c.hoTen ?? c.name ?? '';
+                const email = c.email ?? '';
+                const phone = c.soDienThoai ?? c.phone ?? '';
+                const company = c.congTy ?? c.company ?? '';
+
+                const text = removeVietnameseAccentForDashboardSearch(`
+                    ${name}
+                    ${email}
+                    ${phone}
+                    ${company}
+                `);
+
+                return text.includes(keyword);
+            });
+        }
+
+        renderDashboardCustomersTable(filtered);
+    };
+}
+
+function renderDashboardCustomersTable(customers) {
+    const tbody = document.getElementById('dashCustomersTable');
+    if (!tbody) return;
+
+    const user = AUTH.getCurrentUser();
+    const canDelete = user && user.role !== 'employee';
+
+    const rows = customers.slice(0, 5).map(c => {
+        const id = c.maKhachHang ?? c.id;
+        const name = c.hoTen ?? c.name ?? '';
+        const email = c.email ?? '';
+        const phone = c.soDienThoai ?? c.phone ?? '';
+        const status = c.trangThaiKhach ?? c.status;
+        const { cssClass, label } = mapTrangThaiKhach(status);
+
+        let actionButtons = `<button class="btn-view" onclick="viewCustomer(${id})">Xem</button>`;
+
+        if (canDelete) {
+            actionButtons += `<button class="btn-delete" onclick="deleteCustomer(${id})">Xóa</button>`;
+        } else {
+            actionButtons += `<button class="btn-delete" onclick="requestDeleteCustomer(${id})">Đề nghị Xóa</button>`;
+        }
+
+        return `
+            <tr>
+                <td>${name}</td>
+                <td>${email}</td>
+                <td>${phone}</td>
+                <td><span class="status ${cssClass}">${label}</span></td>
+                <td>${actionButtons}</td>
+            </tr>
+        `;
+    }).join('');
+
+    tbody.innerHTML = rows || `
+        <tr>
+            <td colspan="5" style="text-align:center; color:#94a3b8;">
+                Không tìm thấy khách hàng nào
+            </td>
+        </tr>
+    `;
+}
+
+function removeVietnameseAccentForDashboardSearch(str) {
+    return String(str || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/Đ/g, 'D')
+        .toLowerCase()
+        .trim();
 }
