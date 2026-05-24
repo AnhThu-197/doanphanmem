@@ -144,7 +144,7 @@ export default function App() {
   ]);
 
   const [employees, setEmployees] = useState([
-    { id: 1, name: 'Trần Minh Chiến', email: 'chien@company.com', phone: '0987654321', avatar: 'TC', department: 'Marketing', position: 'Nhân viên marketing', rating: 4.8 },
+    { id: 1, name: 'Trần Minh Chiến', email: 'haip59621@gmail.com', phone: '0987654321', avatar: 'TC', department: 'Marketing', position: 'Nhân viên marketing', rating: 4.8 },
     { id: 2, name: 'Nguyễn Hoàng Anh Thư', email: 'manager@company.com', phone: '0912345678', avatar: 'AT', department: 'Marketing', position: 'Trưởng phòng', rating: 4.9 }
   ]);
 
