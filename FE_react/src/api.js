@@ -8,19 +8,8 @@ export async function checkBackendHealth() {
   try {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), 1500);
-    const headers = {};
-    const stored = localStorage.getItem('currentUser');
-    if (stored) {
-      try {
-        const user = JSON.parse(stored);
-        if (user && user.token) {
-          headers['Authorization'] = `Bearer ${user.token}`;
-        }
-      } catch (e) {}
-    }
-    const response = await window.fetch(`${BASE_URL}/cauhinh`, { 
+    const response = await fetch(`${BASE_URL}/cauhinh`, { 
       method: 'GET', 
-      headers,
       signal: controller.signal 
     });
     clearTimeout(id);
@@ -131,30 +120,13 @@ function mapInteractionToFe(i) {
   };
 }
 
-// Shadow global fetch to automatically inject JWT token headers
-async function fetch(url, options = {}) {
-  const headers = { ...options.headers };
-  const stored = localStorage.getItem('currentUser');
-  if (stored) {
-    try {
-      const user = JSON.parse(stored);
-      if (user && user.token) {
-        headers['Authorization'] = `Bearer ${user.token}`;
-      }
-    } catch (e) {
-      console.error('Error parsing token:', e);
-    }
-  }
-  return window.fetch(url, { ...options, headers });
-}
-
 // CÁC HÀM XỬ LÝ API TRỰC TIẾP
 export const API = {
   isOnline() {
     return true;
   },
 
-  // 1. TÀI KHOẢN & ĐĂNG NHẬP (Dùng API Đăng nhập thật của Spring Boot)
+  // 1. TÀI KHOẢN & ĐĂNG NHẬP
   async login(username, password) {
     let searchUsername = username;
     let searchPassword = password;
@@ -171,65 +143,62 @@ export const API = {
       searchPassword = 'admin123';
     }
 
-    const response = await fetch(`${BASE_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: searchUsername, matKhau: searchPassword })
-    });
-
+    const response = await fetch(`${BASE_URL}/taikhoan`);
     if (response.ok) {
-      const resData = await response.json();
-      if (resData.success && resData.data) {
-        const acc = resData.data;
-        const role = acc.vaiTro === 'ADMIN' ? 'admin' : (acc.vaiTro === 'MANAGER' ? 'manager' : 'employee');
+      const accounts = await response.json();
+      const acc = accounts.find(a => a.email === searchUsername && a.matKhau === searchPassword);
+      if (acc) {
+        const role = acc.maVaiTro === 1 ? 'admin' : (acc.maVaiTro === 2 ? 'manager' : 'employee');
         const user = {
           id: acc.maTaiKhoan,
           username: username,
-          name: acc.hoTen || 'User',
+          name: role === 'admin' ? 'Admin System' : (role === 'manager' ? 'Nguyễn Hoàng Anh Thư' : 'Trần Minh Chiến'),
           email: acc.email,
           role: role,
-          phone: acc.vaiTro === 'ADMIN' ? '0901000001' : (acc.vaiTro === 'MANAGER' ? '0902000002' : '0903000003'),
-          avatar: acc.hoTen ? acc.hoTen.substring(0, 2).toUpperCase() : 'US',
+          phone: role === 'admin' ? '0901234567' : (role === 'manager' ? '0912345678' : '0987654321'),
+          avatar: role === 'admin' ? 'AS' : (role === 'manager' ? 'AT' : 'TC'),
           department: role === 'admin' ? 'IT' : 'Marketing',
-          position: acc.chucVu || (role === 'admin' ? 'Quản trị viên' : (role === 'manager' ? 'Trưởng phòng' : 'Nhân viên marketing')),
-          token: acc.token
+          position: role === 'admin' ? 'Quản trị viên' : (role === 'manager' ? 'Trưởng phòng' : 'Nhân viên marketing')
         };
         localStorage.setItem('currentUser', JSON.stringify(user));
         return { success: true, user };
       }
     }
-    const err = await response.json().catch(() => ({}));
-    return { success: false, message: err.message || 'Tên đăng nhập hoặc mật khẩu không đúng' };
+    return { success: false, message: 'Tên đăng nhập hoặc mật khẩu không đúng' };
   },
 
   async sendOtp(email) {
-    const response = await fetch(`${BASE_URL}/auth/quen-mat-khau`, {
+    const response = await fetch(`${BASE_URL}/taikhoan/quen-mat-khau`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email })
     });
     if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.message || 'Gửi OTP thất bại! Vui lòng kiểm tra email.');
+      throw new Error('Gửi OTP thất bại! Vui lòng kiểm tra email.');
     }
     return true;
   },
 
   async verifyOtp(email, otp) {
-    // Backend không có endpoint xác thực OTP riêng lẻ, việc xác thực được chạy gộp trong lúc đặt lại mật khẩu.
-    // Trả về true ở Client-side để cho phép chuyển sang bước đặt mật khẩu mới.
+    const response = await fetch(`${BASE_URL}/taikhoan/xac-thuc-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otp })
+    });
+    if (!response.ok) {
+      throw new Error('Mã OTP không chính xác hoặc đã hết hạn!');
+    }
     return true;
   },
 
-  async resetPassword(email, otp, newPassword) {
-    const response = await fetch(`${BASE_URL}/auth/dat-lai-mat-khau`, {
+  async resetPassword(email, newPassword) {
+    const response = await fetch(`${BASE_URL}/taikhoan/dat-lai-mat-khau`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, otp, matKhauMoi: newPassword })
+      body: JSON.stringify({ email, newPassword })
     });
     if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.message || 'Đặt lại mật khẩu thất bại!');
+      throw new Error('Đặt lại mật khẩu thất bại!');
     }
     return true;
   },

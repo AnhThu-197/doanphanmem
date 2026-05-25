@@ -123,16 +123,56 @@ export default function App() {
   const [securityForm, setSecurityForm] = useState({});
   const [backupForm, setBackupForm] = useState({});
 
-  // Static mock arrays cleared as requested
-  const [campaigns, setCampaigns] = useState([]);
-  const [contracts, setContracts] = useState([]);
-  const [expenses, setExpenses] = useState([]);
-  const [deleteRequests, setDeleteRequests] = useState([]);
-  const [employees, setEmployees] = useState([]);
-  const [auditLogs, setAuditLogs] = useState([]);
-  const [automationWorkflows, setAutomationWorkflows] = useState([]);
-  const [leadScoringRules, setLeadScoringRules] = useState([]);
-  const [leadScoringThresholds, setLeadScoringThresholds] = useState([]);
+  // Static mock arrays kept exactly y chang from original FE_vanilla
+  const [campaigns, setCampaigns] = useState([
+    { id: 1, name: 'Chiến dịch Xuân 2024', managerId: 2, type: 'Online Ads', description: 'Khuyến mãi mùa xuân', startDate: '2024-03-01', endDate: '2024-03-31', budget: 50000000, status: 'active', actualSpent: 35000000, revenue: 120000000, leads: 450, conversions: 85, clicks: 12500, impressions: 250000, costBreakdown: { advertising: 25000000, content: 5000000, tools: 3000000, other: 2000000 } },
+    { id: 2, name: 'Chiến dịch Email Marketing', managerId: 2, type: 'Email', description: 'Gửi email tới khách hàng', startDate: '2024-02-15', endDate: '2024-02-28', budget: 10000000, status: 'completed', actualSpent: 8500000, revenue: 45000000, leads: 320, conversions: 68, clicks: 8500, impressions: 150000, costBreakdown: { advertising: 5000000, content: 2000000, tools: 1000000, other: 500000 } }
+  ]);
+
+  const [contracts, setContracts] = useState([
+    { id: 1, name: 'Hợp đồng dịch vụ Marketing Q1/2024', customerName: 'Công ty ABC', campaignName: 'Chiến dịch Xuân 2024', value: 50000000, status: 'Thắng', createdDate: '2024-01-15' },
+    { id: 2, name: 'Hợp đồng quảng cáo Facebook', customerName: 'Công ty XYZ', campaignName: 'Chiến dịch Email Marketing', value: 30000000, status: 'Đang thương lượng', createdDate: '2024-02-01' }
+  ]);
+
+  const [expenses, setExpenses] = useState([
+    { id: 1, campaignName: 'Chiến dịch Xuân 2024', name: 'Quảng cáo Facebook', type: 'Quảng cáo trực tuyến', amount: 15000000, date: '2024-03-10', note: 'Chi phí tuần 1' },
+    { id: 2, campaignName: 'Chiến dịch Xuân 2024', name: 'Thiết kế banner', type: 'Thiết kế', amount: 5000000, date: '2024-03-05', note: 'Designer Banner' }
+  ]);
+
+  const [deleteRequests, setDeleteRequests] = useState([
+    { id: 1, customerId: 2, customerName: 'Công ty XYZ', reason: 'Khách hàng không còn hoạt động, SĐT không liên lạc được', requestedBy: 'Trần Minh Chiến', requestedDate: '25/03/2026', status: 'pending' }
+  ]);
+
+  const [employees, setEmployees] = useState([
+    { id: 1, name: 'Trần Minh Chiến', email: 'haip59621@gmail.com', phone: '0987654321', avatar: 'TC', department: 'Marketing', position: 'Nhân viên marketing', rating: 4.8 },
+    { id: 2, name: 'Nguyễn Hoàng Anh Thư', email: 'manager@company.com', phone: '0912345678', avatar: 'AT', department: 'Marketing', position: 'Trưởng phòng', rating: 4.9 }
+  ]);
+
+  const [auditLogs, setAuditLogs] = useState([
+    { id: 1, action: 'LOGIN', message: 'Người dùng Trần Minh Chiến đăng nhập', timestamp: new Date().toLocaleString() }
+  ]);
+
+  const [automationWorkflows, setAutomationWorkflows] = useState([
+    { id: 1, name: 'Chăm sóc Lead mới', trigger: 'new_lead', status: 'active', actions: ['send_email', 'wait_3_days', 'condition_check'], createdDate: '2024-03-01' },
+    { id: 2, name: 'Theo dõi khách hàng không mở email', trigger: 'email_not_opened', status: 'active', actions: ['send_email_reminder'], createdDate: '2024-03-05' }
+  ]);
+
+  const [leadScoringRules, setLeadScoringRules] = useState([
+    { id: 1, action: 'Khách truy cập trang bảng giá', points: 10, active: true },
+    { id: 2, action: 'Khách tải tài liệu', points: 5, active: true },
+    { id: 3, action: 'Khách mở Email', points: 3, active: true },
+    { id: 4, action: 'Khách click link trong Email', points: 8, active: true },
+    { id: 5, action: 'Khách điền form liên hệ', points: 15, active: true },
+    { id: 6, action: 'Khách tham gia webinar', points: 20, active: true }
+  ]);
+
+  const [leadScoringThresholds, setLeadScoringThresholds] = useState([
+    { score: 90, action: 'Chuyển thành Evangelist (Khách hàng trung thành)', status: 'evangelist', active: true },
+    { score: 70, action: 'Chuyển thành Customer (Khách hàng chính thức)', status: 'customer', active: true },
+    { score: 50, action: 'Chuyển thành Prospect (Khách hàng triển vọng)', status: 'prospect', active: true },
+    { score: 30, action: 'Chuyển thành Lead (Khách hàng tiềm năng mới)', status: 'lead', active: true },
+    { score: 0, action: 'Suspect (Người truy cập)', status: 'suspect', active: true }
+  ]);
 
   // Load Session and DB values
   useEffect(() => {
@@ -238,7 +278,7 @@ export default function App() {
     }
     setForgotStatus('Đang lưu mật khẩu...');
     try {
-      await API.resetPassword(forgotEmail, forgotOtp, forgotNewPassword);
+      await API.resetPassword(forgotEmail, forgotNewPassword);
       alert('✓ Đặt lại mật khẩu thành công! Bạn có thể tiến hành đăng nhập.');
       setShowForgotModal(false);
       setForgotStep(1);
@@ -650,19 +690,13 @@ export default function App() {
     return labels[src] || src;
   };
 
-  // Filter logic (safe against null properties)
+  // Filter logic
   const filteredCustomers = customers.filter(c => {
-    if (!c) return false;
-    const name = c.name || '';
-    const email = c.email || '';
-    const phone = c.phone || '';
-    const company = c.company || '';
-
     const matchesSearch = searchQuery === '' || 
-      name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      email.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      phone.includes(searchQuery) || 
-      company.toLowerCase().includes(searchQuery.toLowerCase());
+      c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      c.email.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      c.phone.includes(searchQuery) || 
+      (c.company && c.company.toLowerCase().includes(searchQuery.toLowerCase()));
     
     const matchesStatus = filterStatus === '' || c.status === filterStatus;
     const matchesSource = filterSource === '' || c.source === filterSource;
@@ -980,13 +1014,20 @@ export default function App() {
             ) : (
               <div>
                 <h2 className="page-title">Tổng quan</h2>
-                <div className="cards-container" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <div className="cards-container">
                   <div className="card">
                     <div className="card-info">
                       <h3>Tổng Khách hàng</h3>
-                      <p>{customers.filter(c => c && !c.deleted).length}</p>
+                      <p>{customers.filter(c => !c.deleted).length}</p>
                     </div>
                     <div className="card-icon"><i className="fas fa-users"></i></div>
+                  </div>
+                  <div className="card">
+                    <div className="card-info">
+                      <h3>Chiến dịch Hoạt động</h3>
+                      <p>{campaigns.filter(c => !c.deleted).length}</p>
+                    </div>
+                    <div className="card-icon"><i className="fas fa-bullhorn"></i></div>
                   </div>
                   <div className="card">
                     <div className="card-info">
@@ -994,6 +1035,13 @@ export default function App() {
                       <p>{interactions.length}</p>
                     </div>
                     <div className="card-icon"><i className="fas fa-comments"></i></div>
+                  </div>
+                  <div className="card">
+                    <div className="card-info">
+                      <h3>Doanh thu</h3>
+                      <p>{contracts.filter(c => c.status === 'Thắng').reduce((sum, c) => sum + c.value, 0).toLocaleString()} VND</p>
+                    </div>
+                    <div className="card-icon"><i className="fas fa-chart-line"></i></div>
                   </div>
                 </div>
 
@@ -1013,12 +1061,12 @@ export default function App() {
                       </tr>
                     </thead>
                     <tbody>
-                      {customers.filter(c => c && !c.deleted).slice(0, 5).map(cust => (
+                      {customers.filter(c => !c.deleted).slice(0, 5).map(cust => (
                         <tr key={cust.id}>
-                          <td><strong>{cust.name || 'N/A'}</strong></td>
-                          <td>{cust.email || 'N/A'}</td>
-                          <td>{cust.phone || 'N/A'}</td>
-                          <td><span className={`status ${cust.status || 'suspect'}`}>{getStatusLabel(cust.status || 'suspect')}</span></td>
+                          <td><strong>{cust.name}</strong></td>
+                          <td>{cust.email}</td>
+                          <td>{cust.phone}</td>
+                          <td><span className={`status ${cust.status}`}>{getStatusLabel(cust.status)}</span></td>
                           <td>
                             <button onClick={() => { setSelectedDetailCust(cust); setCustDetailSubTab('detail-info'); setShowCustDetailModal(true); }} className="btn-view" style={{ background: '#2B4856', color: 'white' }}>Xem chi tiết</button>
                           </td>
@@ -1147,9 +1195,32 @@ export default function App() {
               )}
 
               {custActiveSubTab === 'customers-delete-requests' && (
-                <div className="table-container" style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
-                  <i className="fas fa-trash-alt" style={{ fontSize: '48px', marginBottom: '15px', opacity: 0.5 }}></i>
-                  <p>Chức năng đang được phát triển (Không sử dụng dữ liệu mock)</p>
+                <div className="table-container">
+                  <h3>Đề nghị Xóa từ Nhân viên</h3>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Khách hàng</th>
+                        <th>Lý do</th>
+                        <th>Người đề nghị</th>
+                        <th>Ngày đề nghị</th>
+                        <th>Hành động</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {deleteRequests.map(req => (
+                        <tr key={req.id}>
+                          <td><strong>{req.customerName}</strong></td>
+                          <td>{req.reason}</td>
+                          <td>{req.requestedBy}</td>
+                          <td>{req.requestedDate}</td>
+                          <td>
+                            <button className="btn btn-primary" onClick={() => { alert('✓ Đã phê duyệt yêu cầu xóa mềm của khách hàng!'); setDeleteRequests(deleteRequests.filter(r => r.id !== req.id)); }} style={{ padding: '6px 12px', background: '#2B4856', color: 'white' }}>Duyệt xóa</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
 
@@ -1171,17 +1242,126 @@ export default function App() {
 
           {/* PAGE 3: QUẢN LÝ CHIẾN DỊCH (CAMPAIGNS) */}
           {activePage === 'campaigns' && (
-            <div className="table-container" style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
-              <i className="fas fa-bullhorn" style={{ fontSize: '48px', marginBottom: '15px', opacity: 0.5 }}></i>
-              <p>Trang đang được phát triển (Không sử dụng dữ liệu mock)</p>
+            <div>
+              <h2 className="page-title">Quản lý Chiến dịch</h2>
+              <div className="tabs">
+                <button className={`tab-btn ${campaignActiveSubTab === 'campaigns-list' ? 'active' : ''}`} onClick={() => setCampaignActiveSubTab('campaigns-list')}>Danh sách Chiến dịch</button>
+                <button className={`tab-btn ${campaignActiveSubTab === 'campaigns-reports' ? 'active' : ''}`} onClick={() => setCampaignActiveSubTab('campaigns-reports')}>Hiệu quả Chiến dịch</button>
+              </div>
+
+              {campaignActiveSubTab === 'campaigns-list' && (
+                <div className="table-container">
+                  <div className="table-header">
+                    <h3>Chiến dịch Marketing</h3>
+                    <button className="btn-add" onClick={() => alert('Thêm chiến dịch mới')}>+ Thêm Chiến dịch</button>
+                  </div>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Tên chiến dịch</th>
+                        <th>Loại</th>
+                        <th>Ngân sách</th>
+                        <th>Đã chi</th>
+                        <th>Doanh thu</th>
+                        <th>Trạng thái</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {campaigns.map(camp => (
+                        <tr key={camp.id}>
+                          <td><strong>{camp.name}</strong></td>
+                          <td>{camp.type}</td>
+                          <td>{camp.budget.toLocaleString()} VND</td>
+                          <td>{camp.actualSpent.toLocaleString()} VND</td>
+                          <td>{camp.revenue.toLocaleString()} VND</td>
+                          <td><span className={`status ${camp.status === 'active' ? 'customer' : 'suspect'}`}>{camp.status === 'active' ? 'Đang chạy' : 'Đã hoàn thành'}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {campaignActiveSubTab === 'campaigns-reports' && (
+                <div className="table-container">
+                  <h3>Biểu đồ ROI Marketing (Mock)</h3>
+                  <div style={{ padding: '20px', background: '#f8fafc', borderRadius: '8px', marginTop: '15px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                      {campaigns.map(camp => {
+                        const roi = ((camp.revenue - camp.actualSpent) / camp.actualSpent * 100).toFixed(0);
+                        return (
+                          <div key={camp.id}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                              <span>{camp.name}</span>
+                              <strong>ROI: {roi}%</strong>
+                            </div>
+                            <div style={{ background: '#e2e8f0', height: '12px', borderRadius: '6px', overflow: 'hidden' }}>
+                              <div style={{ background: '#2B4856', height: '100%', width: `${Math.min(roi / 3, 100)}%` }}></div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
-          {/* PAGE 5: CHI PHÍ CHIẾN DỊCH (CAMP EXPENSES) */}
+
+              {/* PAGE 5: CHI PHÍ CHIẾN DỊCH (CAMP EXPENSES) */}
           {activePage === 'campaign-expenses' && (
-            <div className="table-container" style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
-              <i className="fas fa-money-bill-wave" style={{ fontSize: '48px', marginBottom: '15px', opacity: 0.5 }}></i>
-              <p>Trang đang được phát triển (Không sử dụng dữ liệu mock)</p>
+            <div>
+              <h2 className="page-title">Chi phí Chiến dịch</h2>
+              <div className="cards-container">
+                <div className="card">
+                  <div className="card-info">
+                    <h3>Tổng ngân sách</h3>
+                    <p>60,000,000 VND</p>
+                  </div>
+                </div>
+                <div className="card">
+                  <div className="card-info">
+                    <h3>Đã chi tiêu thực tế</h3>
+                    <p>43,500,000 VND</p>
+                  </div>
+                </div>
+                <div className="card">
+                  <div className="card-info">
+                    <h3>Ngân sách còn lại</h3>
+                    <p>16,500,000 VND</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="table-container" style={{ marginTop: '20px' }}>
+                <div className="table-header">
+                  <h3>Nhật ký Chi tiêu</h3>
+                  <button className="btn-add" onClick={() => alert('Thêm chi phí')}>+ Thêm Chi phí</button>
+                </div>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Chiến dịch</th>
+                      <th>Khoản chi</th>
+                      <th>Loại chi phí</th>
+                      <th>Số tiền</th>
+                      <th>Ngày chi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {expenses.map(e => (
+                      <tr key={e.id}>
+                        <td><strong>{e.campaignName}</strong></td>
+                        <td>{e.name}</td>
+                        <td>{e.type}</td>
+                        <td>{e.amount.toLocaleString()} VND</td>
+                        <td>{e.date}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
@@ -1402,9 +1582,86 @@ export default function App() {
 
           {/* PAGE 8: TỰ ĐỘNG HÓA (AUTOMATION) */}
           {activePage === 'automation' && (
-            <div className="table-container" style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
-              <i className="fas fa-robot" style={{ fontSize: '48px', marginBottom: '15px', opacity: 0.5 }}></i>
-              <p>Trang đang được phát triển (Không sử dụng dữ liệu mock)</p>
+            <div>
+              <h2 className="page-title">Quy trình Tự động hóa</h2>
+              <div className="tabs">
+                <button className={`tab-btn ${automationActiveSubTab === 'automation-workflow' ? 'active' : ''}`} onClick={() => setAutomationActiveSubTab('automation-workflow')}>Kế hoạch chăm sóc tự động</button>
+                <button className={`tab-btn ${automationActiveSubTab === 'automation-scoring' ? 'active' : ''}`} onClick={() => setAutomationActiveSubTab('automation-scoring')}>Chấm điểm Lead</button>
+              </div>
+
+              {automationActiveSubTab === 'automation-workflow' && (
+                <div className="table-container">
+                  <h3>Luồng Chăm sóc Tự động</h3>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Tên quy trình</th>
+                        <th>Trigger hành động</th>
+                        <th>Các bước xử lý tiếp theo</th>
+                        <th>Trạng thái</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {automationWorkflows.map(w => (
+                        <tr key={w.id}>
+                          <td><strong>{w.name}</strong></td>
+                          <td><span className="status lead">{w.trigger}</span></td>
+                          <td>
+                            <ul style={{ margin: 0, paddingLeft: '15px', fontSize: '12px', color: '#64748b' }}>
+                              {w.actions.map((act, i) => <li key={i}>{act}</li>)}
+                            </ul>
+                          </td>
+                          <td><span className="status customer">Đang chạy</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {automationActiveSubTab === 'automation-scoring' && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                  <div className="table-container">
+                    <h3>Quy tắc chấm điểm Lead</h3>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Hành động của khách</th>
+                          <th>Điểm số</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {leadScoringRules.map(r => (
+                          <tr key={r.id}>
+                            <td>{r.action}</td>
+                            <td><strong style={{ color: '#166534' }}>+{r.points}</strong></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="table-container">
+                    <h3>Ngưỡng chuyển đổi tự động</h3>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Điểm tối thiểu</th>
+                          <th>Hành động tự động</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {leadScoringThresholds.map((t, idx) => (
+                          <tr key={idx}>
+                            <td><strong>{t.score} điểm</strong></td>
+                            <td><span className={`status ${t.status}`}>{t.action}</span></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -1487,9 +1744,35 @@ export default function App() {
 
           {/* PAGE 14: QUẢN LÝ NHÂN VIÊN */}
           {activePage === 'manage-employees' && (
-            <div className="table-container" style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
-              <i className="fas fa-user-tie" style={{ fontSize: '48px', marginBottom: '15px', opacity: 0.5 }}></i>
-              <p>Trang đang được phát triển (Không sử dụng dữ liệu mock)</p>
+            <div className="table-container">
+              <div className="table-header">
+                <h3>Danh sách Nhân viên Marketing</h3>
+                <button className="btn-add" onClick={() => alert('Thêm nhân viên')}>+ Thêm Nhân viên</button>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Họ và Tên</th>
+                    <th>Email</th>
+                    <th>Số điện thoại</th>
+                    <th>Phòng ban</th>
+                    <th>Chức vụ</th>
+                    <th>Đánh giá</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {employees.map(emp => (
+                    <tr key={emp.id}>
+                      <td><strong>{emp.name}</strong></td>
+                      <td>{emp.email}</td>
+                      <td>{emp.phone}</td>
+                      <td>{emp.department}</td>
+                      <td>{emp.position}</td>
+                      <td><strong style={{ color: '#f59e0b' }}>★ {emp.rating}</strong></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
 
@@ -1564,9 +1847,52 @@ export default function App() {
 
               {/* Tab Chiến dịch đã xóa */}
               {trashActiveTab === 'campaigns' && (
-                <div className="table-container" style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
-                  <i className="fas fa-trash" style={{ fontSize: '48px', marginBottom: '15px', opacity: 0.5 }}></i>
-                  <p>Thùng rác trống (Chiến dịch không sử dụng dữ liệu mock)</p>
+                <div className="table-container">
+                  <div className="table-header">
+                    <h3>Chiến dịch đã xóa</h3>
+                    {campaigns.filter(c => c.deleted).length > 0 && (
+                      <button className="btn-delete" onClick={() => emptyTrash('campaigns')} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                        <i className="fas fa-trash-alt"></i> Xóa vĩnh viễn tất cả
+                      </button>
+                    )}
+                  </div>
+                  
+                  {campaigns.filter(c => c.deleted).length > 0 ? (
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Tên chiến dịch</th>
+                          <th>Mô tả</th>
+                          <th>Ngân sách</th>
+                          <th>Thời gian</th>
+                          <th>Hành động</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {campaigns.filter(c => c.deleted).map(c => (
+                          <tr key={c.id} style={{ opacity: 0.8 }}>
+                            <td><strong>{c.name}</strong></td>
+                            <td>{c.description}</td>
+                            <td>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(c.budget)}</td>
+                            <td>{c.startDate} - {c.endDate}</td>
+                            <td>
+                              <button className="btn-edit" onClick={() => restoreCampaign(c.id)} title="Khôi phục" style={{ marginRight: '8px' }}>
+                                <i className="fas fa-undo"></i> Khôi phục
+                              </button>
+                              <button className="btn-delete" onClick={() => permanentDeleteCampaign(c.id)} title="Xóa vĩnh viễn" style={{ background: '#ef4444', color: 'white' }}>
+                                <i className="fas fa-trash-alt"></i> Xóa vĩnh viễn
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
+                      <i className="fas fa-trash" style={{ fontSize: '48px', marginBottom: '15px', opacity: 0.5 }}></i>
+                      <p>Thùng rác trống</p>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1961,7 +2287,7 @@ export default function App() {
         <ApptResultModal
           isOpen={showApptResultModal}
           onClose={() => setShowApptResultModal(false)}
-          selectedAppt={selectedApptId}
+          selectedAppt={selectedAppt}
           apptResultForm={apptResultForm}
           setApptResultForm={setApptResultForm}
           saveApptResult={saveApptResult}
