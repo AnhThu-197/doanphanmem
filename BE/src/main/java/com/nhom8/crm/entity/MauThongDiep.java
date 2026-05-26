@@ -25,6 +25,7 @@ public class MauThongDiep {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "maNhanVienTao")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"taiKhoan", "phuongXa", "hibernateLazyInitializer", "handler"})
     private NhanVien nhanVienTao;
 
     @Column(name = "luotSuDung", nullable = false)

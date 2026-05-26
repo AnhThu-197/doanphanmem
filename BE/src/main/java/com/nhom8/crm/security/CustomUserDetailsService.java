@@ -36,22 +36,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     private String normalizeRole(String roleName) {
         if (roleName == null) return "EMPLOYEE";
-
-        String role = removeAccent(roleName).trim().toUpperCase();
-        if ("ADMIN".equals(role) || role.contains("ADMIN") || role.contains("QUAN TRI")) {
-            return "ADMIN";
-        }
-        if ("MANAGER".equals(role) || role.contains("TRUONG")) {
-            return "MANAGER";
-        }
-        return "EMPLOYEE";
-    }
-
-    private String removeAccent(String value) {
-        String normalized = Normalizer.normalize(value, Normalizer.Form.NFD);
-        return normalized.replaceAll("\\p{M}", "")
-                .replace('\u0110', 'D')
-                .replace('\u0111', 'd');
+        return roleName.trim().toUpperCase();
     }
 
     private boolean isActive(String status) {

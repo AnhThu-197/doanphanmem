@@ -24,9 +24,57 @@ const SendMessageModal = ({
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
               <div className="form-group">
                 <label>Khách hàng nhận *</label>
-                <select className="form-control" required value={sendForm.customerId || ''} onChange={(e) => setSendForm({...sendForm, customerId: e.target.value})}>
+                <select 
+                  className="form-control" 
+                  required 
+                  value={sendForm.customerId || ''} 
+                  onChange={(e) => {
+                    const custId = e.target.value;
+                    const selectedCust = customers.find(c => c.id === parseInt(custId));
+                    
+                    let nextContent = sendForm.content || '';
+                    if (sendForm.rawContent) {
+                      nextContent = sendForm.rawContent;
+                    }
+                    
+                    let nextTitle = sendForm.promoTitle || '';
+                    if (sendForm.rawTitle) {
+                      nextTitle = sendForm.rawTitle;
+                    }
+
+                    if (selectedCust) {
+                      let remainingDays = 0;
+                      if (selectedCust.trialStartDate && selectedCust.trialDays > 0) {
+                        const start = new Date(selectedCust.trialStartDate);
+                        const end = new Date(start.getTime() + selectedCust.trialDays * 24 * 60 * 60 * 1000);
+                        const diff = end - new Date();
+                        remainingDays = Math.ceil(diff / (1000 * 60 * 60 * 24));
+                        if (remainingDays < 0) remainingDays = 0;
+                      }
+                      
+                      nextContent = nextContent
+                        .replace(/{customerName}/g, selectedCust.name || '')
+                        .replace(/{hoTen}/g, selectedCust.name || '')
+                        .replace(/{soNgayConLai}/g, remainingDays.toString());
+
+                      nextTitle = nextTitle
+                        .replace(/{customerName}/g, selectedCust.name || '')
+                        .replace(/{hoTen}/g, selectedCust.name || '')
+                        .replace(/{soNgayConLai}/g, remainingDays.toString());
+                    }
+
+                    setSendForm({
+                      ...sendForm,
+                      customerId: custId,
+                      content: nextContent,
+                      promoTitle: nextTitle
+                    });
+                  }}
+                >
                   <option value="">-- Chọn khách hàng nhận --</option>
-                  {customers.filter(c => !c.deleted).map(c => <option key={c.id} value={c.id}>{c.name} ({c.email})</option>)}
+                  {customers.filter(c => !c.deleted).map(c => (
+                    <option key={c.id} value={c.id}>{c.name} ({c.email})</option>
+                  ))}
                 </select>
               </div>
               <div className="form-group">
@@ -39,35 +87,78 @@ const SendMessageModal = ({
               </div>
             </div>
 
-            <div className="form-group">
-              <label>Chọn mẫu</label>
-              <select className="form-control" value={sendForm.templateId || ''} onChange={(e) => {
-                const tId = e.target.value;
-                const selectedTemp = templates.find(t => t.id === parseInt(tId));
-                if (selectedTemp) {
-                  setSendForm({
-                    ...sendForm,
-                    templateId: tId,
-                    type: selectedTemp.type,
-                    content: selectedTemp.content,
-                    promoTitle: selectedTemp.name
-                  });
-                } else {
-                  setSendForm({
-                    ...sendForm,
-                    templateId: ''
-                  });
-                }
-              }}>
+            <div className="form-group" style={{ marginTop: '15px' }}>
+              <label>Chọn mẫu thông điệp (Tùy chọn)</label>
+              <select 
+                className="form-control" 
+                value={sendForm.templateId || ''} 
+                onChange={(e) => {
+                  const tId = e.target.value;
+                  const selectedTemp = templates.find(t => t.id === parseInt(tId));
+                  if (selectedTemp) {
+                    const selectedCust = customers.find(c => c.id === parseInt(sendForm.customerId));
+                    let compiledContent = selectedTemp.content || '';
+                    let compiledTitle = selectedTemp.name || '';
+                    
+                    if (selectedCust) {
+                      let remainingDays = 0;
+                      if (selectedCust.trialStartDate && selectedCust.trialDays > 0) {
+                        const start = new Date(selectedCust.trialStartDate);
+                        const end = new Date(start.getTime() + selectedCust.trialDays * 24 * 60 * 60 * 1000);
+                        const diff = end - new Date();
+                        remainingDays = Math.ceil(diff / (1000 * 60 * 60 * 24));
+                        if (remainingDays < 0) remainingDays = 0;
+                      }
+                      
+                      compiledContent = compiledContent
+                        .replace(/{customerName}/g, selectedCust.name || '')
+                        .replace(/{hoTen}/g, selectedCust.name || '')
+                        .replace(/{soNgayConLai}/g, remainingDays.toString());
+
+                      compiledTitle = compiledTitle
+                        .replace(/{customerName}/g, selectedCust.name || '')
+                        .replace(/{hoTen}/g, selectedCust.name || '')
+                        .replace(/{soNgayConLai}/g, remainingDays.toString());
+                    }
+
+                    setSendForm({
+                      ...sendForm,
+                      templateId: tId,
+                      type: selectedTemp.type ? selectedTemp.type.trim().toLowerCase() : 'email',
+                      content: compiledContent,
+                      rawContent: selectedTemp.content || '',
+                      promoTitle: compiledTitle,
+                      rawTitle: selectedTemp.name || ''
+                    });
+                  } else {
+                    setSendForm({
+                      ...sendForm,
+                      templateId: '',
+                      rawContent: '',
+                      rawTitle: '',
+                      type: sendForm.type || 'email'
+                    });
+                  }
+                }}
+              >
                 <option value="">-- Không sử dụng mẫu --</option>
                 {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
-              <small style={{ color: '#64748b', display: 'block', marginTop: '5px' }}>Chọn mẫu để tự động điền nội dung</small>
+              <small style={{ color: '#64748b', display: 'block', marginTop: '5px' }}>
+                Chọn mẫu để tự động điền nội dung và kênh gửi mặc định
+              </small>
             </div>
 
-            <div className="form-group">
+            <div className="form-group" style={{ marginTop: '15px' }}>
               <label>Nội dung thông điệp *</label>
-              <textarea className="form-control" rows="5" required value={sendForm.content || ''} onChange={(e) => setSendForm({...sendForm, content: e.target.value})} placeholder="Sử dụng {customerName} để chèn tên động..."></textarea>
+              <textarea 
+                className="form-control" 
+                rows="5" 
+                required 
+                value={sendForm.content || ''} 
+                onChange={(e) => setSendForm({...sendForm, content: e.target.value})} 
+                placeholder="Nhập nội dung thông điệp hoặc sử dụng {hoTen}, {soNgayConLai}..."
+              ></textarea>
             </div>
 
             <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px dashed #cbd5e1', marginTop: '15px' }}>

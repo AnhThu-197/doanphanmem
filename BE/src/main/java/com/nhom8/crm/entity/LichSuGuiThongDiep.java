@@ -16,14 +16,17 @@ public class LichSuGuiThongDiep {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "maKhachHang", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"nguoiPhuTrach", "nganhNghe", "nguonKhachHang", "phuongXa", "hibernateLazyInitializer", "handler"})
     private KhachHang khachHang;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "maNhanVien")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"taiKhoan", "phuongXa", "hibernateLazyInitializer", "handler"})
     private NhanVien nhanVien;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "maMau")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"nhanVienTao", "hibernateLazyInitializer", "handler"})
     private MauThongDiep mauThongDiep;
 
     @Column(name = "kenhGui", nullable = false, length = 50)

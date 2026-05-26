@@ -29,14 +29,23 @@ public class NhacNhoController {
     private final KhachHangRepository khachHangRepository;
 
     @GetMapping("/cua-toi")
-    @Operation(summary = "Lấy nhắc nhở của nhân viên hiện tại")
+    @Operation(summary = "Lấy nhắc nhở theo vai trò của người dùng hiện tại")
     public ResponseEntity<ApiResponse<List<NhacNho>>> getCuaToi(
             @AuthenticationPrincipal UserDetails userDetails) {
         var nhanVien = nhanVienRepository.findByTaiKhoan_Email(userDetails.getUsername())
                 .orElseThrow(() -> new ResourceNotFoundException("Nhân viên không tồn tại"));
-        return ResponseEntity.ok(ApiResponse.ok(
-                nhacNhoRepository.findByNhanVien_MaNhanVienAndTrangThaiNhacNho(
-                        nhanVien.getMaNhanVien(), "Chờ xử lý")));
+        
+        String role = nhanVien.getTaiKhoan().getVaiTro().getTenVaiTro().trim().toUpperCase();
+        if ("ADMIN".equals(role) || "MANAGER".equals(role)) {
+            // Admin and Manager can see all active pending reminders in the system
+            return ResponseEntity.ok(ApiResponse.ok(
+                    nhacNhoRepository.findByTrangThaiNhacNho("Chờ xử lý")));
+        } else {
+            // Employee can only see active pending reminders assigned to them
+            return ResponseEntity.ok(ApiResponse.ok(
+                    nhacNhoRepository.findByNhanVien_MaNhanVienAndTrangThaiNhacNho(
+                            nhanVien.getMaNhanVien(), "Chờ xử lý")));
+        }
     }
 
     @PostMapping

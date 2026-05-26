@@ -36,6 +36,7 @@ export default function App() {
   const [interactions, setInteractions] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [messageHistory, setMessageHistory] = useState([]);
+  const [users, setUsers] = useState([]);
   const [config, setConfig] = useState(null);
   const [backendOnline, setBackendOnline] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -70,6 +71,7 @@ export default function App() {
   const [showApptResultModal, setShowApptResultModal] = useState(false);
   const [selectedApptId, setSelectedApptId] = useState(null);
   const [apptResultForm, setApptResultForm] = useState({ result: 'success', resultNotes: '' });
+  const selectedAppt = appointments.find(a => a.id === selectedApptId) || null;
 
   const [showTrialModal, setShowTrialModal] = useState(false);
   const [selectedTrialCust, setSelectedTrialCust] = useState(null);
@@ -213,12 +215,31 @@ export default function App() {
 
       const msgHist = await API.getMessageHistory();
       setMessageHistory(msgHist || []);
+
+      const storedUser = localStorage.getItem('currentUser');
+      if (storedUser) {
+        const parsed = JSON.parse(storedUser);
+        if (parsed && parsed.role === 'admin') {
+          try {
+            const usersData = await API.getAllUsers();
+            setUsers(usersData);
+          } catch (e) {
+            console.error('Lỗi nạp danh sách tài khoản:', e);
+          }
+        }
+      }
     } catch (err) {
       console.error('Lỗi nạp dữ liệu từ backend:', err);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (activePage === 'user-management' && user && user.role === 'admin') {
+      API.getAllUsers().then(setUsers).catch(console.error);
+    }
+  }, [activePage, user]);
 
   // --- AUTHENTICATION & LOGIN ---
   const handleLogin = async (e, demoUser = null, demoPass = null) => {
@@ -651,15 +672,48 @@ export default function App() {
     }
   };
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
+  const handleSendMessage = async (e, customForm = null) => {
+    if (e && e.preventDefault) e.preventDefault();
     if (sendingMsg) return;
     setSendingMsg(true);
     try {
-      await API.sendMessage(sendForm);
+      const formToSubmit = customForm || sendForm;
+      
+      // Compile content and promoTitle placeholders dynamically before calling API
+      let compiledContent = formToSubmit.content || '';
+      let compiledTitle = formToSubmit.promoTitle || '';
+      const selectedCust = customers.find(c => c.id === parseInt(formToSubmit.customerId));
+      if (selectedCust) {
+        compiledContent = compiledContent
+          .replace(/{customerName}/g, selectedCust.name || '')
+          .replace(/{hoTen}/g, selectedCust.name || '');
+        
+        compiledTitle = compiledTitle
+          .replace(/{customerName}/g, selectedCust.name || '')
+          .replace(/{hoTen}/g, selectedCust.name || '');
+        
+        let remainingDays = 0;
+        if (selectedCust.trialStartDate && selectedCust.trialDays > 0) {
+          const start = new Date(selectedCust.trialStartDate);
+          const end = new Date(start.getTime() + selectedCust.trialDays * 24 * 60 * 60 * 1000);
+          const diff = end - new Date();
+          remainingDays = Math.ceil(diff / (1000 * 60 * 60 * 24));
+          if (remainingDays < 0) remainingDays = 0;
+        }
+        compiledContent = compiledContent.replace(/{soNgayConLai}/g, remainingDays.toString());
+        compiledTitle = compiledTitle.replace(/{soNgayConLai}/g, remainingDays.toString());
+      }
+      
+      const payload = {
+        ...formToSubmit,
+        content: compiledContent,
+        promoTitle: compiledTitle
+      };
+      
+      await API.sendMessage(payload);
       setShowSendModal(false);
       loadData();
-      alert('✓ Gửi thông điệp chiến dịch thành công qua SP10! Số lượt sử dụng mẫu đã được cộng dồn và lịch sử tự động đồng bộ sang Tương tác.');
+      alert('✓ Gửi thông điệp chiến dịch thành công! Số lượt sử dụng mẫu đã được cộng dồn và lịch sử tự động đồng bộ sang Tương tác.');
     } catch (err) {
       alert(err.message);
     } finally {
@@ -780,13 +834,13 @@ export default function App() {
             </div>
             
             <div className="demo-users">
-              <button type="button" className="demo-btn" onClick={() => { setLoginUsername('nhanvien'); setLoginPassword('123'); handleLogin(null, 'nhanvien', '123'); }}>
+              <button type="button" className="demo-btn" onClick={() => { setLoginUsername('nv01@crm.vn'); setLoginPassword('nv01123'); handleLogin(null, 'nv01@crm.vn', 'nv01123'); }}>
                 <i className="fas fa-user"></i> Nhân viên Marketing
               </button>
-              <button type="button" className="demo-btn" onClick={() => { setLoginUsername('truongphong'); setLoginPassword('123'); handleLogin(null, 'truongphong', '123'); }}>
+              <button type="button" className="demo-btn" onClick={() => { setLoginUsername('anhthu@gmail.com'); setLoginPassword('tp123'); handleLogin(null, 'anhthu@gmail.com', 'tp123'); }}>
                 <i className="fas fa-user-tie"></i> Trưởng phòng Marketing
               </button>
-              <button type="button" className="demo-btn" onClick={() => { setLoginUsername('admin'); setLoginPassword('123'); handleLogin(null, 'admin', '123'); }}>
+              <button type="button" className="demo-btn" onClick={() => { setLoginUsername('admin@gmail.com'); setLoginPassword('admin123'); handleLogin(null, 'admin@gmail.com', 'admin123'); }}>
                 <i className="fas fa-user-shield"></i> Quản trị viên
               </button>
             </div>
@@ -1924,27 +1978,27 @@ export default function App() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td><strong>nhanvien</strong></td>
-                    <td>Trần Minh Chiến</td>
-                    <td>chien@company.com</td>
-                    <td>Nhân viên marketing</td>
-                    <td><span className="status customer">Hoạt động</span></td>
-                  </tr>
-                  <tr>
-                    <td><strong>truongphong</strong></td>
-                    <td>Nguyễn Hoàng Anh Thư</td>
-                    <td>manager@company.com</td>
-                    <td>Trưởng phòng</td>
-                    <td><span className="status customer">Hoạt động</span></td>
-                  </tr>
-                  <tr>
-                    <td><strong>admin</strong></td>
-                    <td>Admin System</td>
-                    <td>admin@company.com</td>
-                    <td>Quản trị viên</td>
-                    <td><span className="status customer">Hoạt động</span></td>
-                  </tr>
+                  {users.length > 0 ? (
+                    users.map((u) => (
+                      <tr key={u.id}>
+                        <td><strong>{u.username}</strong></td>
+                        <td>{u.name}</td>
+                        <td>{u.email}</td>
+                        <td>{getRoleLabel(u.role)}</td>
+                        <td>
+                          <span className={`status ${u.status === 'active' ? 'customer' : 'suspended'}`}>
+                            {u.status === 'active' ? 'Hoạt động' : 'Bị khóa'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: '#64748b' }}>
+                        Đang tải danh sách tài khoản...
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>

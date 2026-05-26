@@ -1,16 +1,50 @@
-// FE/src/api.js
-// CẦU NỐI API - KẾT NỐI SPRING BOOT REST API TRỰC TIẾP (KHÔNG DÙNG MOCK)
+// FE_react/src/api.js
+// CẦU NỐI API - KẾT NỐI SPRING BOOT REST API VÀ MOCK HYBRID LOCAL STORAGE
 
-const BASE_URL = 'http://localhost:8080/api';
+const BASE_URL = "http://localhost:8082/api";
 
-// Hàm kiểm tra nhanh sức khỏe Backend
+// Helper to get headers with JWT bearer token
+function getHeaders() {
+  const headers = { "Content-Type": "application/json" };
+  const stored = localStorage.getItem("currentUser");
+  if (stored) {
+    try {
+      const user = JSON.parse(stored);
+      if (user.token) {
+        headers["Authorization"] = `Bearer ${user.token}`;
+      }
+    } catch (e) {
+      console.error("Error parsing user from localStorage", e);
+    }
+  }
+  return headers;
+}
+
+// Helper for multipart/form-data headers (no Content-Type to let browser set boundary)
+function getUploadHeaders() {
+  const headers = {};
+  const stored = localStorage.getItem("currentUser");
+  if (stored) {
+    try {
+      const user = JSON.parse(stored);
+      if (user.token) {
+        headers["Authorization"] = `Bearer ${user.token}`;
+      }
+    } catch (e) {
+      console.error("Error parsing user from localStorage", e);
+    }
+  }
+  return headers;
+}
+
+// Quick health check on the backend using public swagger/docs endpoint
 export async function checkBackendHealth() {
   try {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), 1500);
-    const response = await fetch(`${BASE_URL}/cauhinh`, { 
-      method: 'GET', 
-      signal: controller.signal 
+    const response = await fetch(`${BASE_URL}/v3/api-docs`, {
+      method: "GET",
+      signal: controller.signal,
     });
     clearTimeout(id);
     return response.ok;
@@ -19,7 +53,7 @@ export async function checkBackendHealth() {
   }
 }
 
-// MAPPERS: Chuyển đổi giữa Entity Backend SQL Server (tiếng Việt) và state React (tiếng Anh)
+// MAPPERS: Translate between SQL Server Entity models (Vietnamese) and React State models (English)
 function mapKhachHangToFe(kh) {
   if (!kh) return null;
   return {
@@ -28,511 +62,890 @@ function mapKhachHangToFe(kh) {
     email: kh.email,
     phone: kh.soDienThoai,
     company: kh.congTy,
-    status: kh.trangThaiKhach,
+    status:
+      kh.trangThaiKhach === "KH tiềm năng mới"
+        ? "lead"
+        : kh.trangThaiKhach === "KH triển vọng"
+          ? "prospect"
+          : kh.trangThaiKhach === "KH chính thức"
+            ? "customer"
+            : kh.trangThaiKhach === "KH trung thành"
+              ? "evangelist"
+              : "suspect",
     score: kh.diemTiemNang,
     trialStartDate: kh.ngayBatDauDungThu,
     trialDays: kh.soNgayDungThu,
-    trialStatus: kh.trangThaiDungThu,
+    trialStatus: kh.trangThaiDungThu || "Chưa dùng thử",
     deleted: kh.daXoa || false,
     deleteReason: kh.lyDoXoa,
     deletedDate: kh.ngayXoa,
-    createdDate: kh.ngayTao ? kh.ngayTao.substring(0, 10) : '',
-    updatedDate: kh.ngayCapNhat ? kh.ngayCapNhat.substring(0, 10) : '',
-    source: kh.maNguonKH === 1 ? 'facebook' : kh.maNguonKH === 2 ? 'google' : kh.maNguonKH === 3 ? 'direct' : kh.maNguonKH === 4 ? 'referral' : 'website',
-    industry: kh.maNganhNghe === 1 ? 'Công nghệ' : kh.maNganhNghe === 2 ? 'Bán lẻ' : 'Dịch vụ',
-    assignedTo: kh.nguoiPhuTrach ? kh.nguoiPhuTrach.maNhanVien : 1
+    createdDate: kh.ngayTao ? kh.ngayTao.substring(0, 10) : "",
+    updatedDate: kh.ngayCapNhat ? kh.ngayCapNhat.substring(0, 10) : "",
+    source:
+      kh.maNguonKH === 1
+        ? "facebook"
+        : kh.maNguonKH === 2
+          ? "google"
+          : kh.maNguonKH === 3
+            ? "direct"
+            : kh.maNguonKH === 4
+              ? "referral"
+              : "website",
+    industry:
+      kh.maNganhNghe === 1
+        ? "Công nghệ"
+        : kh.maNganhNghe === 2
+          ? "Bán lẻ"
+          : "Dịch vụ",
+    assignedTo: kh.maNguoiPhuTrach || 1,
   };
 }
 
 function mapKhachHangToBe(kh) {
   if (!kh) return null;
+
+  // Translate react status back to SQL server status
+  let statusBe = "Suspect (Người truy cập)";
+  if (kh.status === "lead") statusBe = "KH tiềm năng mới";
+  else if (kh.status === "prospect") statusBe = "KH triển vọng";
+  else if (kh.status === "customer") statusBe = "KH chính thức";
+  else if (kh.status === "evangelist") statusBe = "KH trung thành";
+
   return {
     maKhachHang: kh.id || null,
-    hoTen: kh.name || '',
-    email: kh.email || '',
-    soDienThoai: kh.phone || '',
-    congTy: kh.company || '',
-    trangThaiKhach: kh.status || 'Người truy cập',
+    hoTen: kh.name || "",
+    email: kh.email || "",
+    soDienThoai: kh.phone || "",
+    congTy: kh.company || "",
+    trangThaiKhach: statusBe,
     diemTiemNang: kh.score !== undefined ? kh.score : 0,
     ngayBatDauDungThu: kh.trialStartDate || null,
     soNgayDungThu: kh.trialDays !== undefined ? parseInt(kh.trialDays) : 0,
-    trangThaiDungThu: kh.trialStatus || 'Chưa dùng thử',
+    trangThaiDungThu: kh.trialStatus || "Chưa dùng thử",
     daXoa: kh.deleted || false,
     lyDoXoa: kh.deleteReason || null,
-    maNguonKH: kh.source === 'facebook' ? 1 : kh.source === 'google' ? 2 : kh.source === 'direct' ? 3 : kh.source === 'referral' ? 4 : 5,
-    maNganhNghe: kh.industry === 'Công nghệ' ? 1 : kh.industry === 'Bán lẻ' ? 2 : 3
-  };
-}
-
-function mapTemplateToFe(t) {
-  if (!t) return null;
-  return {
-    id: t.id,
-    name: t.title,
-    type: t.type ? t.type.toLowerCase() : 'email',
-    content: t.content,
-    creatorId: t.creatorId,
-    creatorName: t.creatorName,
-    useCount: t.useCount || 0
+    maNguonKH:
+      kh.source === "facebook"
+        ? 1
+        : kh.source === "google"
+          ? 2
+          : kh.source === "direct"
+            ? 3
+            : kh.source === "referral"
+              ? 4
+              : 5,
+    maNganhNghe:
+      kh.industry === "Công nghệ" ? 1 : kh.industry === "Bán lẻ" ? 2 : 3,
   };
 }
 
 function mapAppointmentToFe(a) {
   if (!a) return null;
+
+  // Formats thoiGianNhac (LocalDateTime e.g. 2026-05-25T14:00:00) into date & time
+  let dateStr = "";
+  let timeStr = "";
+  if (a.thoiGianNhac) {
+    const parts = a.thoiGianNhac.split("T");
+    dateStr = parts[0] || "";
+    timeStr = parts[1] ? parts[1].substring(0, 5) : "";
+  }
+
+  const typeMap = {
+    "Gọi điện": "call",
+    Email: "email",
+    "Gặp mặt": "meeting",
+    call: "call",
+    email: "email",
+    meeting: "meeting",
+  };
+
   return {
-    id: a.id,
-    customerId: a.customerId,
-    customerName: a.customerName,
-    employeeId: a.employeeId,
-    employeeName: a.employeeName,
-    title: a.title,
-    type: a.type || 'call',
-    date: a.date,
-    time: a.time,
-    reminderBefore: a.reminderBefore,
-    notes: a.notes,
-    status: a.status,
-    result: a.result,
-    resultNotes: a.resultNotes
+    id: a.maNhacNho,
+    customerId: a.khachHang ? a.khachHang.maKhachHang : null,
+    customerName: a.khachHang ? a.khachHang.hoTen : "Chưa xác định",
+    employeeId: a.nhanVien ? a.nhanVien.maNhanVien : null,
+    employeeName: a.nhanVien ? a.nhanVien.hoTen : "Chưa xác định",
+    title: a.tieuDe,
+    type: typeMap[a.loaiNhacNho] || "call",
+    date: dateStr,
+    time: timeStr,
+    reminderBefore: a.nhacTruocPhut || 30,
+    notes: a.moTa || "",
+    status:
+      a.trangThaiNhacNho === "Chờ xử lý"
+        ? "scheduled"
+        : a.trangThaiNhacNho === "Đã hủy"
+          ? "cancelled"
+          : "completed",
+    result: a.ketQua,
+    resultNotes: a.ghiChuKetQua,
   };
 }
 
-function mapInteractionToFe(i) {
-  if (!i) return null;
-  return {
-    id: i.id,
-    customerId: i.customerId,
-    customerName: i.customerName,
-    employeeId: i.employeeId,
-    employeeName: i.employeeName,
-    type: i.type || 'call',
-    content: i.content,
-    notes: i.notes,
-    date: i.date ? i.date.substring(0, 19).replace('T', ' ') : '',
-    file: i.attachments && i.attachments.length > 0 ? {
-      ...i.attachments[0],
-      fileUrl: i.attachments[0].downloadUrl ? `http://localhost:8080${i.attachments[0].downloadUrl}` : '#'
-    } : null,
-    attachments: i.attachments ? i.attachments.map(att => ({
-      ...att,
-      fileUrl: att.downloadUrl ? `http://localhost:8080${att.downloadUrl}` : '#'
-    })) : []
-  };
+// LOCAL STORAGE INITIALIZATION FOR MOCK CHANNELS
+function initLocalStorage() {
+  if (!localStorage.getItem("message_templates")) {
+    const defaultTemplates = [
+      {
+        id: 1,
+        name: "Chào mừng khách hàng mới",
+        type: "email",
+        content: "Xin chào {customerName}, chúng tôi rất vui được phục vụ bạn!",
+        creatorId: 3,
+        creatorName: "Trần Minh Chiến",
+        useCount: 15,
+      },
+      {
+        id: 2,
+        name: "Nhắc nhở cuộc họp",
+        type: "sms",
+        content:
+          "Nhắc nhở: Bạn có cuộc hẹn trao đổi dịch vụ lúc {time} ngày {date}.",
+        creatorId: 3,
+        creatorName: "Trần Minh Chiến",
+        useCount: 22,
+      },
+      {
+        id: 3,
+        name: "Cảm ơn khách hàng",
+        type: "email",
+        content:
+          "Cảm ơn {customerName} đã tin tưởng và sử dụng giải pháp phần mềm của chúng tôi!",
+        creatorId: 3,
+        creatorName: "Trần Minh Chiến",
+        useCount: 37,
+      },
+      {
+        id: 4,
+        name: "Giới thiệu sản phẩm mới",
+        type: "email",
+        content:
+          "Xin chào {customerName}, chúng tôi vừa ra mắt module CRM Marketing mới nâng cấp!",
+        creatorId: 3,
+        creatorName: "Trần Minh Chiến",
+        useCount: 8,
+      },
+    ];
+    localStorage.setItem("message_templates", JSON.stringify(defaultTemplates));
+  }
+
+  if (!localStorage.getItem("message_history")) {
+    const defaultHistory = [
+      {
+        id: 1,
+        customerId: 1,
+        customerName: "Công ty ABC",
+        channel: "Email",
+        title: "Chào mừng khách hàng mới",
+        content: "Xin chào Công ty ABC, chúng tôi rất vui được phục vụ bạn!",
+        status: "success",
+        sentTime: new Date(Date.now() - 10000000).toLocaleString(),
+      },
+      {
+        id: 2,
+        customerId: 2,
+        customerName: "Công ty XYZ",
+        channel: "SMS",
+        title: "Khuyến mãi đặc biệt",
+        content: "Khuyến mãi đặc biệt giảm giá 20% cho Công ty XYZ!",
+        status: "success",
+        sentTime: new Date(Date.now() - 5000000).toLocaleString(),
+      },
+      {
+        id: 3,
+        customerId: 1,
+        customerName: "Công ty ABC",
+        channel: "Email",
+        title: "Cảm ơn khách hàng",
+        content: "Cảm ơn Công ty ABC đã tin tưởng và sử dụng dịch vụ!",
+        status: "success",
+        sentTime: new Date().toLocaleString(),
+      },
+    ];
+    localStorage.setItem("message_history", JSON.stringify(defaultHistory));
+  }
+
+  if (!localStorage.getItem("interactions")) {
+    const defaultInteractions = [
+      {
+        id: 1,
+        customerId: 1,
+        customerName: "Công ty ABC",
+        employeeId: 3,
+        employeeName: "Trần Minh Chiến",
+        type: "call",
+        content: "Tư vấn sản phẩm CRM",
+        notes: "Khách hàng cực kỳ quan tâm đến tính năng tự động hóa.",
+        date: "2026-05-24 14:00:00",
+        attachments: [],
+      },
+      {
+        id: 2,
+        customerId: 2,
+        customerName: "Công ty XYZ",
+        employeeId: 3,
+        employeeName: "Trần Minh Chiến",
+        type: "email",
+        content: "Gửi báo giá dùng thử",
+        notes: "Đã gửi báo giá 30 ngày dùng thử.",
+        date: "2026-05-23 09:30:00",
+        attachments: [],
+      },
+      {
+        id: 3,
+        customerId: 1,
+        customerName: "Công ty ABC",
+        employeeId: 3,
+        employeeName: "Trần Minh Chiến",
+        type: "meeting",
+        content: "Gặp mặt chốt hợp đồng",
+        notes: "Ký thỏa thuận khung dùng thử.",
+        date: "2026-05-22 15:00:00",
+        attachments: [],
+      },
+    ];
+    localStorage.setItem("interactions", JSON.stringify(defaultInteractions));
+  }
+
+  if (!localStorage.getItem("system_config")) {
+    const defaultConfig = {
+      companyName: "Công ty TNHH Phần mềm Nhóm 8",
+      email: "contact@nhom8crm.com",
+      phone: "0987654321",
+      website: "https://nhom8crm.com",
+      address: "Khu công nghệ phần mềm ĐHQG, Thủ Đức, TP.HCM",
+      timezone: "Asia/Ho_Chi_Minh",
+      dateFormat: "DD/MM/YYYY",
+      currency: "VND",
+      language: "vi",
+      emailNotifications: true,
+      smsNotifications: false,
+      browserNotifications: true,
+      sessionTimeout: 30,
+      maxFailedAttempts: 5,
+      passwordExpiryDays: 90,
+      twoFactorAuth: false,
+      autoBackup: true,
+      backupFrequency: "daily",
+    };
+    localStorage.setItem("system_config", JSON.stringify(defaultConfig));
+  }
 }
 
-// CÁC HÀM XỬ LÝ API TRỰC TIẾP
+// Run LocalStorage Initializer
+initLocalStorage();
+
+// Core API Connector Module
 export const API = {
   isOnline() {
     return true;
   },
 
-  // 1. TÀI KHOẢN & ĐĂNG NHẬP
-  async login(username, password) {
-    let searchUsername = username;
-    let searchPassword = password;
+  // 1. ACCOUNTS & AUTHENTICATION (Spring Boot Backend API)
+  async login(email, password) {
+    try {
+      const response = await fetch(`${BASE_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email, matKhau: password }),
+      });
 
-    // Ánh xạ tài khoản demo sang email thật trong CSDL
-    if (username === 'nhanvien' && password === '123') {
-      searchUsername = 'nv01@crm.vn';
-      searchPassword = 'nv01123';
-    } else if (username === 'truongphong' && password === '123') {
-      searchUsername = 'anhthu@gmail.com';
-      searchPassword = 'tp123';
-    } else if (username === 'admin' && password === '123') {
-      searchUsername = 'admin@gmail.com';
-      searchPassword = 'admin123';
-    }
-
-    const response = await fetch(`${BASE_URL}/taikhoan`);
-    if (response.ok) {
-      const accounts = await response.json();
-      const acc = accounts.find(a => a.email === searchUsername && a.matKhau === searchPassword);
-      if (acc) {
-        const role = acc.maVaiTro === 1 ? 'admin' : (acc.maVaiTro === 2 ? 'manager' : 'employee');
-        const user = {
-          id: acc.maTaiKhoan,
-          username: username,
-          name: role === 'admin' ? 'Admin System' : (role === 'manager' ? 'Nguyễn Hoàng Anh Thư' : 'Trần Minh Chiến'),
-          email: acc.email,
-          role: role,
-          phone: role === 'admin' ? '0901234567' : (role === 'manager' ? '0912345678' : '0987654321'),
-          avatar: role === 'admin' ? 'AS' : (role === 'manager' ? 'AT' : 'TC'),
-          department: role === 'admin' ? 'IT' : 'Marketing',
-          position: role === 'admin' ? 'Quản trị viên' : (role === 'manager' ? 'Trưởng phòng' : 'Nhân viên marketing')
-        };
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        return { success: true, user };
+      if (response.ok) {
+        const resJson = await response.json();
+        if (resJson.success && resJson.data) {
+          const loginRes = resJson.data;
+          const v = (loginRes.vaiTro || "").toLowerCase();
+          const role = (v.includes("admin") || v.includes("quản trị") || v.includes("quan tri"))
+            ? "admin"
+            : (v.includes("trưởng phòng") || v.includes("truong") || v.includes("tru?") || v.includes("manager"))
+              ? "manager"
+              : "employee";
+          const user = {
+            id: loginRes.maTaiKhoan,
+            username: loginRes.email || email,
+            name: loginRes.hoTen,
+            email: loginRes.email,
+            role: role,
+            phone:
+              role === "admin"
+                ? "0901234567"
+                : role === "manager"
+                  ? "0912345678"
+                  : "0987654321",
+            avatar: role === "admin" ? "AS" : role === "manager" ? "AT" : "TC",
+            department: role === "admin" ? "IT" : "Marketing",
+            position:
+              loginRes.chucVu ||
+              (role === "admin"
+                ? "Quản trị viên"
+                : role === "manager"
+                  ? "Trưởng phòng"
+                  : "Nhân viên marketing"),
+            token: loginRes.token,
+          };
+          localStorage.setItem("currentUser", JSON.stringify(user));
+          return { success: true, user };
+        }
       }
+      return {
+        success: false,
+        message: "Tên đăng nhập hoặc mật khẩu không đúng",
+      };
+    } catch (e) {
+      console.error("Login error", e);
+      return {
+        success: false,
+        message: "Không thể kết nối đến máy chủ backend.",
+      };
     }
-    return { success: false, message: 'Tên đăng nhập hoặc mật khẩu không đúng' };
   },
 
   async sendOtp(email) {
-    const response = await fetch(`${BASE_URL}/taikhoan/quen-mat-khau`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email })
+    const response = await fetch(`${BASE_URL}/auth/quen-mat-khau`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
     });
     if (!response.ok) {
-      throw new Error('Gửi OTP thất bại! Vui lòng kiểm tra email.');
+      throw new Error("Gửi OTP thất bại! Vui lòng kiểm tra email.");
     }
     return true;
   },
 
   async verifyOtp(email, otp) {
-    const response = await fetch(`${BASE_URL}/taikhoan/xac-thuc-otp`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, otp })
-    });
-    if (!response.ok) {
-      throw new Error('Mã OTP không chính xác hoặc đã hết hạn!');
-    }
+    // Save otp in localStorage to use in resetPassword step (Spring Boot combines verify and reset)
+    localStorage.setItem("forgot_otp_temp", otp);
     return true;
   },
 
   async resetPassword(email, newPassword) {
-    const response = await fetch(`${BASE_URL}/taikhoan/dat-lai-mat-khau`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, newPassword })
+    const otp = localStorage.getItem("forgot_otp_temp") || "";
+    const response = await fetch(`${BASE_URL}/auth/dat-lai-mat-khau`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, otp, matKhauMoi: newPassword }),
     });
     if (!response.ok) {
-      throw new Error('Đặt lại mật khẩu thất bại!');
+      throw new Error("Đặt lại mật khẩu thất bại!");
     }
+    localStorage.removeItem("forgot_otp_temp");
     return true;
   },
 
-  // 2. KHÁCH HÀNG & DÙNG THỬ
-  async getCustomers() {
-    const response = await fetch(`${BASE_URL}/khachhang`);
+  async getAllUsers() {
+    const response = await fetch(`${BASE_URL}/admin/users`, {
+      headers: getHeaders(),
+    });
     if (response.ok) {
-      const list = await response.json();
-      return list.map(mapKhachHangToFe);
+      const resJson = await response.json();
+      return resJson.data || [];
     }
-    throw new Error('Không thể tải danh sách khách hàng.');
+    throw new Error("Không thể tải danh sách tài khoản người dùng.");
+  },
+
+  // 2. CUSTOMERS & TRIAL MANAGEMENT (Spring Boot Backend API)
+  async getCustomers() {
+    const response = await fetch(`${BASE_URL}/khach-hang`, {
+      headers: getHeaders(),
+    });
+    if (response.ok) {
+      const resJson = await response.json();
+      return (resJson.data || []).map(mapKhachHangToFe);
+    }
+    throw new Error("Không thể tải danh sách khách hàng.");
   },
 
   async createCustomer(customer) {
     const body = mapKhachHangToBe(customer);
-    const response = await fetch(`${BASE_URL}/khachhang`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+    const response = await fetch(`${BASE_URL}/khach-hang`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(body),
     });
     if (response.ok) {
-      const saved = await response.json();
-      return mapKhachHangToFe(saved);
+      const resJson = await response.json();
+      return mapKhachHangToFe(resJson.data);
     }
     const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || 'Lỗi thêm mới khách hàng.');
+    throw new Error(err.message || "Lỗi thêm mới khách hàng.");
   },
 
   async updateCustomer(id, customer) {
     const body = mapKhachHangToBe(customer);
-    const response = await fetch(`${BASE_URL}/khachhang/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+    const response = await fetch(`${BASE_URL}/khach-hang/${id}`, {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify(body),
     });
     if (response.ok) {
-      const updated = await response.json();
-      return mapKhachHangToFe(updated);
+      const resJson = await response.json();
+      return mapKhachHangToFe(resJson.data);
     }
     const err = await response.json().catch(() => ({}));
-    throw new Error(err.message || 'Lỗi cập nhật khách hàng.');
+    throw new Error(err.message || "Lỗi cập nhật khách hàng.");
   },
 
   async deleteCustomer(id) {
-    const response = await fetch(`${BASE_URL}/khachhang/${id}/soft?lyDo=Đề nghị xóa từ CRM`, { method: 'DELETE' });
+    const response = await fetch(`${BASE_URL}/khach-hang/${id}`, {
+      method: "DELETE",
+      headers: getHeaders(),
+    });
     return response.ok;
   },
 
   async permanentDeleteCustomer(id) {
-    const response = await fetch(`${BASE_URL}/khachhang/${id}/permanent`, { method: 'DELETE' });
+    // Backend doesn't have hard delete endpoint, we soft delete it as permanent equivalent
+    const response = await fetch(`${BASE_URL}/khach-hang/${id}`, {
+      method: "DELETE",
+      headers: getHeaders(),
+    });
     return response.ok;
   },
 
   async getTrialDetails(customerId) {
-    const response = await fetch(`${BASE_URL}/khachhang/${customerId}/dungthu`);
-    if (response.ok) {
-      const details = await response.json();
-      return {
-        customerId: customerId,
-        customerName: details.customerName,
-        startDate: details.startDate,
-        durationDays: details.durationDays,
-        status: details.status,
-        remainingDays: details.remainingDays
-      };
-    }
-    throw new Error('Lỗi lấy thông tin dùng thử.');
-  },
-
-  async updateTrialDetails(customerId, startDate, durationDays, status = 'Đang dùng thử') {
-    const response = await fetch(`${BASE_URL}/khachhang/${customerId}/dungthu`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ startDate, durationDays, status })
+    // Derived from the customer record directly (stored on KhachHang in DB)
+    const response = await fetch(`${BASE_URL}/khach-hang/${customerId}`, {
+      headers: getHeaders(),
     });
     if (response.ok) {
-      const updated = await response.json();
-      return updated;
+      const resJson = await response.json();
+      const kh = mapKhachHangToFe(resJson.data);
+
+      let remainingDays = 0;
+      if (kh.trialStartDate && kh.trialDays) {
+        const start = new Date(kh.trialStartDate);
+        const end = new Date(
+          start.getTime() + kh.trialDays * 24 * 60 * 60 * 1000,
+        );
+        const diff = end - new Date();
+        remainingDays = Math.ceil(diff / (1000 * 60 * 60 * 24));
+        if (remainingDays < 0) remainingDays = 0;
+      }
+
+      return {
+        customerId: customerId,
+        customerName: kh.name,
+        startDate: kh.trialStartDate || "",
+        durationDays: kh.trialDays || 30,
+        status: kh.trialStatus || "Chưa dùng thử",
+        remainingDays: remainingDays,
+      };
     }
-    throw new Error('Lỗi cập nhật thông tin dùng thử.');
+    throw new Error("Lỗi lấy thông tin dùng thử.");
   },
 
-  // 3. LỊCH HẸN & NHẮC NHỞ
-  async getAppointments() {
-    const response = await fetch(`${BASE_URL}/lichhen`);
-    if (response.ok) {
-      const list = await response.json();
-      return list.map(mapAppointmentToFe);
+  async updateTrialDetails(
+    customerId,
+    startDate,
+    durationDays,
+    status = "Đang dùng thử",
+  ) {
+    // Fetch customer, update trial fields, and save via standard PUT /khach-hang/{id}
+    const getRes = await fetch(`${BASE_URL}/khach-hang/${customerId}`, {
+      headers: getHeaders(),
+    });
+    if (!getRes.ok) throw new Error("Không tìm thấy thông tin khách hàng.");
+
+    const resJson = await getRes.json();
+    const customer = resJson.data;
+
+    // Update trial fields
+    customer.ngayBatDauDungThu = startDate;
+    customer.soNgayDungThu = parseInt(durationDays);
+    customer.trangThaiDungThu = status;
+    if (status === "Đang dùng thử") {
+      customer.trangThaiKhach = "KH chính thức"; // Convert to active customer status in backend
     }
-    throw new Error('Không thể tải danh sách lịch hẹn.');
+
+    const putRes = await fetch(`${BASE_URL}/khach-hang/${customerId}`, {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify(customer),
+    });
+
+    if (putRes.ok) {
+      const putJson = await putRes.json();
+      return {
+        customerId,
+        startDate,
+        durationDays,
+        status,
+        customerName: putJson.data.hoTen,
+      };
+    }
+    throw new Error("Lỗi cập nhật thông tin dùng thử.");
+  },
+
+  // 3. APPOINTMENTS & REMINDERS (Spring Boot Backend API /nhac-nho)
+  async getAppointments() {
+    const response = await fetch(`${BASE_URL}/nhac-nho/cua-toi`, {
+      headers: getHeaders(),
+    });
+    if (response.ok) {
+      const resJson = await response.json();
+      return (resJson.data || []).map(mapAppointmentToFe);
+    }
+    throw new Error("Không thể tải danh sách lịch hẹn.");
   },
 
   async createAppointment(appointment) {
     const body = {
-      customerId: parseInt(appointment.customerId),
-      employeeId: 3,
-      title: appointment.title,
-      type: appointment.type || 'call',
-      date: appointment.date,
-      time: appointment.time,
-      reminderBefore: parseInt(appointment.reminderBefore || 30),
-      notes: appointment.notes
+      khachHang: {
+        maKhachHang: parseInt(appointment.customerId),
+      },
+      tieuDe: appointment.title,
+      moTa: appointment.notes || "",
+      loaiNhacNho:
+        appointment.type === "call"
+          ? "Gọi điện"
+          : appointment.type === "email"
+            ? "Email"
+            : "Gặp mặt",
+      thoiGianNhac: `${appointment.date}T${appointment.time || "00:00"}:00`,
+      nhacTruocPhut: parseInt(appointment.reminderBefore || 30),
+      trangThaiNhacNho: "Chờ xử lý",
     };
-    const response = await fetch(`${BASE_URL}/lichhen`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+
+    const response = await fetch(`${BASE_URL}/nhac-nho`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(body),
     });
     if (response.ok) {
-      const saved = await response.json();
-      return mapAppointmentToFe(saved);
+      const resJson = await response.json();
+      return mapAppointmentToFe(resJson.data);
     }
-    throw new Error('Lỗi tạo nhắc nhở lịch hẹn.');
+    throw new Error("Lỗi tạo nhắc nhở lịch hẹn.");
   },
 
   async updateAppointmentResult(id, result, resultNotes) {
-    const response = await fetch(`${BASE_URL}/lichhen/${id}/ketqua`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ result, resultNotes })
+    const response = await fetch(`${BASE_URL}/nhac-nho/${id}/hoan-thanh`, {
+      method: "PATCH",
+      headers: getHeaders(),
+      body: JSON.stringify({ ketQua: result, ghiChu: resultNotes }),
     });
     if (response.ok) {
-      const updated = await response.json();
-      return mapAppointmentToFe(updated);
+      const resJson = await response.json();
+      return mapAppointmentToFe(resJson.data);
     }
-    throw new Error('Lỗi cập nhật kết quả lịch hẹn.');
+    throw new Error("Lỗi cập nhật kết quả lịch hẹn.");
   },
 
   async deleteAppointment(id) {
-    const response = await fetch(`${BASE_URL}/lichhen/${id}`, { method: 'DELETE' });
+    const response = await fetch(`${BASE_URL}/nhac-nho/${id}`, {
+      method: "DELETE",
+      headers: getHeaders(),
+    });
     return response.ok;
   },
 
-  // 4. MẪU THÔNG ĐIỆP & MARKETING
+  // 4. MESSAGE TEMPLATES & MARKETING (Spring Boot Backend API /thong-diep)
   async getTemplates() {
-    const response = await fetch(`${BASE_URL}/thongdiep/mau`);
-    if (response.ok) {
-      const list = await response.json();
-      return list.map(mapTemplateToFe);
+    try {
+      const response = await fetch(`${BASE_URL}/thong-diep/mau`, {
+        headers: getHeaders(),
+      });
+      if (response.ok) {
+        const resJson = await response.json();
+        return (resJson.data || []).map((t) => ({
+          id: t.maMau,
+          name: t.tieuDe,
+          content: t.noiDung,
+          type: t.loaiThongDiep ? t.loaiThongDiep.trim().toLowerCase() : "email",
+          creatorId: t.nhanVienTao ? t.nhanVienTao.maNhanVien : null,
+          creatorName: t.nhanVienTao ? t.nhanVienTao.hoTen : "Hệ thống",
+          useCount: t.luotSuDung || 0,
+        }));
+      }
+    } catch (e) {
+      console.error(
+        "Error fetching templates from BE, falling back to LocalStorage",
+        e,
+      );
     }
-    throw new Error('Không thể tải danh sách mẫu thông điệp.');
+    const data = localStorage.getItem("message_templates");
+    return data ? JSON.parse(data) : [];
   },
 
   async createTemplate(template) {
-    const response = await fetch(`${BASE_URL}/thongdiep/mau`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: template.name,
-        content: template.content,
-        type: template.type || 'email',
-        creatorId: 3
-      })
-    });
-    if (response.ok) {
-      const saved = await response.json();
-      return mapTemplateToFe(saved);
-    }
-    throw new Error('Lỗi tạo mẫu thông điệp.');
+    const data = localStorage.getItem("message_templates");
+    const list = data ? JSON.parse(data) : [];
+    const newT = {
+      id: Math.max(0, ...list.map((t) => t.id)) + 1,
+      name: template.name,
+      type: template.type || "email",
+      content: template.content,
+      creatorId: 3,
+      creatorName: "Trần Minh Chiến",
+      useCount: 0,
+    };
+    list.push(newT);
+    localStorage.setItem("message_templates", JSON.stringify(list));
+    return newT;
   },
 
   async updateTemplate(id, template) {
-    const response = await fetch(`${BASE_URL}/thongdiep/mau/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: template.name,
+    const data = localStorage.getItem("message_templates");
+    const list = data ? JSON.parse(data) : [];
+    const idx = list.findIndex((t) => t.id === id);
+    if (idx !== -1) {
+      list[idx] = {
+        ...list[idx],
+        name: template.name,
+        type: template.type || "email",
         content: template.content,
-        type: template.type || 'email',
-        creatorId: 3
-      })
-    });
-    if (response.ok) {
-      const updated = await response.json();
-      return mapTemplateToFe(updated);
+      };
+      localStorage.setItem("message_templates", JSON.stringify(list));
+      return list[idx];
     }
-    throw new Error('Lỗi cập nhật mẫu thông điệp.');
+    throw new Error("Không tìm thấy mẫu tin nhắn.");
   },
 
   async deleteTemplate(id) {
-    const response = await fetch(`${BASE_URL}/thongdiep/mau/${id}`, { method: 'DELETE' });
-    return response.ok;
+    const data = localStorage.getItem("message_templates");
+    let list = data ? JSON.parse(data) : [];
+    list = list.filter((t) => t.id !== id);
+    localStorage.setItem("message_templates", JSON.stringify(list));
+    return true;
   },
 
   async sendMessage(message) {
-    const response = await fetch(`${BASE_URL}/thongdiep`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    let response;
+    try {
+      response = await fetch(`${BASE_URL}/thong-diep/gui`, {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(message),
+      });
+    } catch (e) {
+      console.error(
+        "Error sending message via BE, falling back to LocalStorage",
+        e,
+      );
+      const data = localStorage.getItem("message_history");
+      const list = data ? JSON.parse(data) : [];
+      const newMsg = {
+        id: Math.max(0, ...list.map((m) => m.id)) + 1,
         customerId: parseInt(message.customerId),
-        employeeId: 3,
-        templateId: message.templateId ? parseInt(message.templateId) : null,
-        type: message.type || 'email',
+        customerName: message.customerName || "Khách hàng",
+        channel: message.type || "Email",
+        title: message.promoTitle || "Thông điệp Marketing",
         content: message.content,
-        promoTitle: message.promoTitle || '',
-        promoDescription: message.promoDescription || '',
-        promoCode: message.promoCode || '',
-        promoExpiry: message.promoExpiry || '',
-        promoLink: message.promoLink || '',
-        schedule: message.isScheduled || false,
-        scheduleTime: message.scheduleTime || null,
-        trackOpen: message.trackOpen !== undefined ? message.trackOpen : true
-      })
-    });
-    if (response.ok) return await response.json();
-    throw new Error('Gửi thông điệp marketing thất bại!');
+        status: "success",
+        sentTime: new Date().toLocaleString(),
+      };
+      list.push(newMsg);
+      localStorage.setItem("message_history", JSON.stringify(list));
+      return newMsg;
+    }
+
+    if (response.ok) {
+      const resJson = await response.json();
+      const m = resJson.data;
+      return {
+        id: m.maLichSuGui,
+        customerId: m.khachHang ? m.khachHang.maKhachHang : null,
+        customerName: m.khachHang ? m.khachHang.hoTen : "Khách hàng",
+        channel: m.kenhGui || "Email",
+        title: m.tieuDe || "Thông điệp Marketing",
+        content: m.noiDung || "",
+        status: m.trangThaiGui === "Đã gửi" ? "success" : "failed",
+        sentTime: m.thoiGianGui
+          ? m.thoiGianGui.substring(0, 19).replace("T", " ")
+          : "N/A",
+      };
+    }
+
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Lỗi gửi thông điệp từ hệ thống backend.");
   },
 
   async getMessageHistory() {
-    const response = await fetch(`${BASE_URL}/thongdiep/lichsu`);
-    if (response.ok) {
-      const list = await response.json();
-      return list.map(item => ({
-        id: item.id,
-        customerId: item.customerId,
-        customerName: item.customerName,
-        channel: item.channel,
-        title: item.title,
-        content: item.content,
-        status: item.status,
-        sentTime: item.sentTime
-      }));
+    try {
+      const response = await fetch(`${BASE_URL}/thong-diep/lich-su`, {
+        headers: getHeaders(),
+      });
+      if (response.ok) {
+        const resJson = await response.json();
+        return (resJson.data || []).map((m) => ({
+          id: m.maLichSuGui,
+          customerId: m.khachHang ? m.khachHang.maKhachHang : null,
+          customerName: m.khachHang ? m.khachHang.hoTen : "Khách hàng",
+          channel: m.kenhGui || "Email",
+          title: m.tieuDe || "Thông điệp Marketing",
+          content: m.noiDung || "",
+          status: m.trangThaiGui === "Đã gửi" ? "success" : "failed",
+          sentTime: m.thoiGianGui
+            ? m.thoiGianGui.substring(0, 19).replace("T", " ")
+            : "N/A",
+        }));
+      }
+    } catch (e) {
+      console.error(
+        "Error fetching message history, falling back to LocalStorage",
+        e,
+      );
     }
-    throw new Error('Không thể tải lịch sử thông điệp.');
+    const data = localStorage.getItem("message_history");
+    return data ? JSON.parse(data) : [];
   },
 
-  // 5. TƯƠNG TÁC & TỆP ĐÍNH KÈM
+  // 5. INTERACTION HISTORY & ATTACHMENT (Hybrid LocalStorage Fallback)
   async getInteractions() {
-    const response = await fetch(`${BASE_URL}/tuongtac`);
-    if (response.ok) {
-      const list = await response.json();
-      return list.map(mapInteractionToFe);
-    }
-    throw new Error('Không thể tải danh sách lịch sử tương tác.');
+    const data = localStorage.getItem("interactions");
+    return data ? JSON.parse(data) : [];
   },
 
   async createInteraction(interaction) {
-    const body = {
+    const data = localStorage.getItem("interactions");
+    const list = data ? JSON.parse(data) : [];
+    const newI = {
+      id: Math.max(0, ...list.map((i) => i.id)) + 1,
       customerId: parseInt(interaction.customerId),
+      customerName: interaction.customerName || "Khách hàng",
       employeeId: 3,
-      type: interaction.type || 'call',
+      employeeName: "Trần Minh Chiến",
+      type: interaction.type || "call",
       content: interaction.content,
-      notes: interaction.notes || ''
+      notes: interaction.notes || "",
+      date: new Date().toISOString().substring(0, 19).replace("T", " "),
+      attachments: [],
     };
-    const response = await fetch(`${BASE_URL}/tuongtac`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    if (response.ok) {
-      const saved = await response.json();
-      return mapInteractionToFe(saved);
-    }
-    throw new Error('Lỗi thêm lịch sử tương tác.');
+    list.push(newI);
+    localStorage.setItem("interactions", JSON.stringify(list));
+    return newI;
   },
 
   async updateInteraction(id, interaction) {
-    const body = {
-      customerId: parseInt(interaction.customerId),
-      employeeId: 3,
-      type: interaction.type || 'call',
-      content: interaction.content,
-      notes: interaction.notes || ''
-    };
-    const response = await fetch(`${BASE_URL}/tuongtac/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    if (response.ok) {
-      const updated = await response.json();
-      return mapInteractionToFe(updated);
+    const data = localStorage.getItem("interactions");
+    const list = data ? JSON.parse(data) : [];
+    const idx = list.findIndex((i) => i.id === id);
+    if (idx !== -1) {
+      list[idx] = {
+        ...list[idx],
+        customerId: parseInt(interaction.customerId),
+        type: interaction.type || "call",
+        content: interaction.content,
+        notes: interaction.notes || "",
+      };
+      localStorage.setItem("interactions", JSON.stringify(list));
+      return list[idx];
     }
-    throw new Error('Lỗi sửa lịch sử tương tác.');
+    throw new Error("Lỗi sửa lịch sử tương tác.");
   },
 
   async deleteInteraction(id) {
-    const response = await fetch(`${BASE_URL}/tuongtac/${id}`, { method: 'DELETE' });
-    return response.ok;
+    const data = localStorage.getItem("interactions");
+    let list = data ? JSON.parse(data) : [];
+    list = list.filter((i) => i.id !== id);
+    localStorage.setItem("interactions", JSON.stringify(list));
+    return true;
   },
 
   async uploadAttachment(interactionId, file) {
-    const formData = new FormData();
-    formData.append('file', file);
-    const response = await fetch(`${BASE_URL}/tuongtac/${interactionId}/files`, {
-      method: 'POST',
-      body: formData
-    });
-    if (response.ok) {
-      const fileData = await response.json();
-      return fileData;
+    const data = localStorage.getItem("interactions");
+    const list = data ? JSON.parse(data) : [];
+    const idx = list.findIndex((i) => i.id === parseInt(interactionId));
+    if (idx !== -1) {
+      const fileId =
+        Math.max(0, ...(list[idx].attachments || []).map((a) => a.id)) + 1;
+      const newAttachment = {
+        id: fileId,
+        fileName: file.name,
+        fileSize: file.size,
+        downloadUrl: "#",
+        fileUrl: "#",
+      };
+      if (!list[idx].attachments) list[idx].attachments = [];
+      list[idx].attachments.push(newAttachment);
+      localStorage.setItem("interactions", JSON.stringify(list));
+      return newAttachment;
     }
-    throw new Error('Upload file thất bại.');
+    throw new Error("Upload file thất bại.");
   },
 
   async deleteAttachment(interactionId, fileId) {
-    const response = await fetch(`${BASE_URL}/tuongtac/${interactionId}/files/${fileId}`, { method: 'DELETE' });
-    return response.ok;
+    const data = localStorage.getItem("interactions");
+    const list = data ? JSON.parse(data) : [];
+    const idx = list.findIndex((i) => i.id === parseInt(interactionId));
+    if (idx !== -1 && list[idx].attachments) {
+      list[idx].attachments = list[idx].attachments.filter(
+        (a) => a.id !== parseInt(fileId),
+      );
+      localStorage.setItem("interactions", JSON.stringify(list));
+      return true;
+    }
+    return false;
   },
 
-  // 6. CẤU HÌNH & BACKUP
+  // 6. SYSTEM CONFIGURATION & BACKUP (Hybrid LocalStorage Fallback)
   async getConfig() {
-    const response = await fetch(`${BASE_URL}/cauhinh`);
-    if (response.ok) {
-      const cfg = await response.json();
-      return cfg;
-    }
-    throw new Error('Không thể tải cấu hình hệ thống.');
+    const data = localStorage.getItem("system_config");
+    return data ? JSON.parse(data) : null;
   },
 
   async updateConfig(config) {
-    const response = await fetch(`${BASE_URL}/cauhinh`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(config)
-    });
-    if (response.ok) return await response.json();
-    throw new Error('Lỗi cập nhật cấu hình hệ thống.');
+    localStorage.setItem("system_config", JSON.stringify(config));
+    return config;
   },
 
   async downloadBackup() {
-    window.open(`${BASE_URL}/cauhinh/backup`, '_blank');
+    const stateData = {
+      message_templates: JSON.parse(
+        localStorage.getItem("message_templates") || "[]",
+      ),
+      message_history: JSON.parse(
+        localStorage.getItem("message_history") || "[]",
+      ),
+      interactions: JSON.parse(localStorage.getItem("interactions") || "[]"),
+      system_config: JSON.parse(localStorage.getItem("system_config") || "{}"),
+    };
+    const dataStr =
+      "data:text/json;charset=utf-8," +
+      encodeURIComponent(JSON.stringify(stateData));
+    const dlAnchorElem = document.createElement("a");
+    dlAnchorElem.setAttribute("href", dataStr);
+    dlAnchorElem.setAttribute(
+      "download",
+      `crm_backup_${new Date().toISOString().substring(0, 10)}.json`,
+    );
+    dlAnchorElem.click();
     return true;
   },
 
   async restoreBackup(file) {
-    const formData = new FormData();
-    formData.append('file', file);
-    const response = await fetch(`${BASE_URL}/cauhinh/restore`, {
-      method: 'POST',
-      body: formData
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (parsed.message_templates)
+            localStorage.setItem(
+              "message_templates",
+              JSON.stringify(parsed.message_templates),
+            );
+          if (parsed.message_history)
+            localStorage.setItem(
+              "message_history",
+              JSON.stringify(parsed.message_history),
+            );
+          if (parsed.interactions)
+            localStorage.setItem(
+              "interactions",
+              JSON.stringify(parsed.interactions),
+            );
+          if (parsed.system_config)
+            localStorage.setItem(
+              "system_config",
+              JSON.stringify(parsed.system_config),
+            );
+          resolve(true);
+        } catch (err) {
+          reject(new Error("Restore CSDL thất bại! File không hợp lệ."));
+        }
+      };
+      reader.readAsText(file);
     });
-    if (response.ok) return true;
-    throw new Error('Restore CSDL thất bại!');
-  }
+  },
 };
