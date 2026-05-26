@@ -64,6 +64,14 @@ const API_SERVICES = {
     roi: (id) => API_CLIENT.get(API_ENDPOINTS.chienDich.roi(id)),
   },
 
+  chiPhiChienDich: {
+    list: () => API_CLIENT.get(API_ENDPOINTS.chiPhiChienDich.list),
+    detail: (id) => API_CLIENT.get(API_ENDPOINTS.chiPhiChienDich.detail(id)),
+    create: (payload) => API_CLIENT.post(API_ENDPOINTS.chiPhiChienDich.create, payload),
+    update: (id, payload) => API_CLIENT.put(API_ENDPOINTS.chiPhiChienDich.update(id), payload),
+    delete: (id) => API_CLIENT.delete(API_ENDPOINTS.chiPhiChienDich.delete(id)),
+  },
+
   baoCao: {
     tongQuan: () => API_CLIENT.get(API_ENDPOINTS.baoCao.tongQuan),
     roiChienDich: (id) => API_CLIENT.get(API_ENDPOINTS.baoCao.roiChienDich(id)),

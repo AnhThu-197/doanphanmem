@@ -41,6 +41,14 @@ const API_ENDPOINTS = {
     exportCustomers: "/khach-hang/export",
   },
 
+  chiPhiChienDich: {
+    list: "/chi-phi-chien-dich",
+    detail: (id) => `/chi-phi-chien-dich/${id}`,
+    create: "/chi-phi-chien-dich",
+    update: (id) => `/chi-phi-chien-dich/${id}`,
+    delete: (id) => `/chi-phi-chien-dich/${id}`,
+  },
+
   baoCao: {
     tongQuan: "/bao-cao/tong-quan",
     roiChienDich: (id) => `/bao-cao/chien-dich/${id}/roi`,
