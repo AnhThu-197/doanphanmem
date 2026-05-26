@@ -2,25 +2,89 @@
 // CAMPAIGN EXPENSES PAGE
 // ============================================
 
-function loadCampaignExpenses() {
-    loadCampaignExpensesPage();
+let editingExpenseIdInline = null;
+
+function mapBackendExpenseToFrontend(e) {
+    return {
+        id: e.maChiPhi,
+        campaignId: e.maChienDich,
+        campaignName: e.campaignName || '',
+        name: e.tenKhoanChi,
+        type: e.loaiChiPhi,
+        amount: e.soTien || 0,
+        date: e.ngayGhiNhan ? e.ngayGhiNhan.split('T')[0] : '',
+        source: e.nguonGhiNhan || 'Nhập thủ công',
+        note: e.ghiChu || ''
+    };
 }
 
-function loadCampaignExpensesPage() {
+async function loadCampaignExpenses() {
+    await loadCampaignExpensesPage();
+}
+
+async function loadCampaignExpensesPage() {
     const mainContent = document.getElementById('mainContent');
+    if (!mainContent) return;
+
+    const user = AUTH.getCurrentUser();
+    const isApiSession = user?.authSource === 'api';
+
+    if (isApiSession) {
+        mainContent.innerHTML = `
+            <div class="page-header">
+                <div>
+                    <h1>Chi phí Chiến dịch</h1>
+                    <p>Theo dõi và quản lý chi phí thực tế của từng chiến dịch.</p>
+                </div>
+            </div>
+            <div style="text-align: center; padding: 40px;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: #3b82f6; margin-bottom: 16px;"></i>
+                <p style="color: #64748b;">Đang tải danh sách chi phí...</p>
+            </div>
+        `;
+        try {
+            const [campaignsRes, expensesRes] = await Promise.all([
+                API_SERVICES.chienDich.list(),
+                API_SERVICES.chiPhiChienDich.list()
+            ]);
+            const campaignsList = campaignsRes.data || campaignsRes;
+            const expensesList = expensesRes.data || expensesRes;
+
+            DATA.campaigns = campaignsList.map(mapBackendCampaignToFrontend);
+            DATA.campaignExpenses = expensesList.map(mapBackendExpenseToFrontend);
+        } catch (error) {
+            console.error('Lỗi khi tải chi phí chiến dịch:', error);
+            mainContent.innerHTML = `
+                <div class="page-header">
+                    <div>
+                        <h1>Chi phí Chiến dịch</h1>
+                        <p>Theo dõi và quản lý chi phí thực tế của từng chiến dịch.</p>
+                    </div>
+                </div>
+                <div style="background: #fef2f2; border: 1px solid #fee2e2; border-radius: 8px; padding: 24px; text-align: center; margin-top: 20px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ef4444; margin-bottom: 16px;"></i>
+                    <h3 style="color: #991b1b; margin-bottom: 8px;">Không thể kết nối đến hệ thống</h3>
+                    <p style="color: #7f1d1d; margin-bottom: 16px;">Đã xảy ra lỗi khi tải dữ liệu chi phí: ${error.message || 'Lỗi không xác định'}</p>
+                    <button class="btn btn-primary" onclick="loadCampaignExpenses()">Thử lại</button>
+                </div>
+            `;
+            return;
+        }
+    }
+
     const campaigns = DATA.campaigns.filter(c => !c.deleted) || [];
     const expenses = DATA.campaignExpenses || [];
     
     // Tính tổng chi phí cho từng chiến dịch
     campaigns.forEach(campaign => {
         const totalSpent = expenses
-            .filter(e => e.campaignId === campaign.id)
-            .reduce((sum, e) => sum + e.amount, 0);
+            .filter(e => Number(e.campaignId) === Number(campaign.id))
+            .reduce((sum, e) => sum + Number(e.amount), 0);
         campaign.actualSpent = totalSpent;
     });
     
-    const totalBudget = campaigns.reduce((sum, c) => sum + c.budget, 0);
-    const totalSpent = campaigns.reduce((sum, c) => sum + (c.actualSpent || 0), 0);
+    const totalBudget = campaigns.reduce((sum, c) => sum + Number(c.budget || 0), 0);
+    const totalSpent = campaigns.reduce((sum, c) => sum + Number(c.actualSpent || 0), 0);
     const totalExpenses = expenses.length;
     const remaining = totalBudget - totalSpent;
     
@@ -110,7 +174,6 @@ function loadCampaignExpensesPage() {
     `;
 }
 
-
 function renderCampaignExpenseCards(campaigns) {
     if (campaigns.length === 0) {
         return `
@@ -169,7 +232,6 @@ function renderCampaignExpenseCards(campaigns) {
     }).join('');
 }
 
-
 function renderExpensesTableInline(expenses) {
     if (expenses.length === 0) {
         return `
@@ -207,7 +269,6 @@ function renderExpensesTableInline(expenses) {
             </td>
         </tr>
     `).join('');
-
 }
 
 function openExpenseModalInline(campaignId = null) {
@@ -226,7 +287,7 @@ function openExpenseModalInline(campaignId = null) {
                         <select id="expenseCampaignInline" required>
                             <option value="">-- Chọn chiến dịch --</option>
                             ${DATA.campaigns.filter(c => !c.deleted).map(c => 
-                                `<option value="${c.id}" ${campaignId === c.id ? 'selected' : ''}>${c.name}</option>`
+                                `<option value="${c.id}" ${Number(campaignId) === Number(c.id) ? 'selected' : ''}>${c.name}</option>`
                             ).join('')}
                         </select>
                     </div>
@@ -283,7 +344,6 @@ function openExpenseModalInline(campaignId = null) {
         </div>
     `;
     
-    // Remove existing modal if any
     const existingModal = document.getElementById('expenseModalInline');
     if (existingModal) {
         existingModal.remove();
@@ -292,7 +352,6 @@ function openExpenseModalInline(campaignId = null) {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
     document.body.classList.add('modal-open');
     
-    // Set today's date
     document.getElementById('expenseDateInline').valueAsDate = new Date();
 }
 
@@ -304,70 +363,131 @@ function closeExpenseModalInline() {
     document.body.classList.remove('modal-open');
 }
 
-function saveExpenseInline(event) {
+async function saveExpenseInline(event) {
     event.preventDefault();
     
     const campaignId = parseInt(document.getElementById('expenseCampaignInline').value);
-    const campaign = DATA.campaigns.find(c => c.id === campaignId);
+    const campaign = DATA.campaigns.find(c => Number(c.id) === Number(campaignId));
     
     const formData = {
         campaignId: campaignId,
-        campaignName: campaign.name,
-        name: document.getElementById('expenseNameInline').value,
+        campaignName: campaign ? campaign.name : '',
+        name: document.getElementById('expenseNameInline').value.trim(),
         type: document.getElementById('expenseTypeInline').value,
         amount: parseFloat(document.getElementById('expenseAmountInline').value),
         date: document.getElementById('expenseDateInline').value,
         source: 'Nhập thủ công',
-        note: document.getElementById('expenseNoteInline').value
+        note: document.getElementById('expenseNoteInline').value.trim()
     };
     
-    if (editingExpenseIdInline) {
-        const index = DATA.campaignExpenses.findIndex(e => e.id === editingExpenseIdInline);
-        DATA.campaignExpenses[index] = { ...DATA.campaignExpenses[index], ...formData };
-        alert('✓ Cập nhật chi phí thành công!');
-    } else {
-        const newExpense = {
-            id: DATA.campaignExpenses.length > 0 ? Math.max(...DATA.campaignExpenses.map(e => e.id)) + 1 : 1,
-            ...formData
+    if (!formData.campaignId || !formData.name || !formData.type || isNaN(formData.amount) || formData.amount <= 0 || !formData.date) {
+        alert('Vui lòng điền đầy đủ các thông tin bắt buộc và số tiền phải lớn hơn 0.');
+        return;
+    }
+
+    const isApiSession = AUTH.getCurrentUser()?.authSource === 'api';
+    
+    if (isApiSession) {
+        const payloadBackend = {
+            maChienDich: formData.campaignId,
+            tenKhoanChi: formData.name,
+            loaiChiPhi: formData.type,
+            soTien: formData.amount,
+            ghiChu: formData.note,
+            nguonGhiNhan: formData.source,
+            ngayGhiNhan: formData.date
         };
-        DATA.campaignExpenses.push(newExpense);
-        alert('✓ Thêm chi phí thành công!');
+        try {
+            if (editingExpenseIdInline) {
+                await API_SERVICES.chiPhiChienDich.update(editingExpenseIdInline, payloadBackend);
+                alert('✓ Cập nhật chi phí thành công (API)!');
+            } else {
+                await API_SERVICES.chiPhiChienDich.create(payloadBackend);
+                alert('✓ Thêm chi phí thành công (API)!');
+            }
+        } catch (error) {
+            console.error('Lỗi khi lưu chi phí:', error);
+            alert('Không thể lưu chi phí: ' + (error.message || 'Lỗi không xác định'));
+            return;
+        }
+    } else {
+        if (editingExpenseIdInline) {
+            const index = DATA.campaignExpenses.findIndex(e => Number(e.id) === Number(editingExpenseIdInline));
+            if (index !== -1) {
+                DATA.campaignExpenses[index] = { ...DATA.campaignExpenses[index], ...formData };
+            }
+            alert('✓ Cập nhật chi phí thành công!');
+        } else {
+            const newExpense = {
+                id: DATA.campaignExpenses.length > 0 ? Math.max(...DATA.campaignExpenses.map(e => Number(e.id) || 0)) + 1 : 1,
+                ...formData
+            };
+            DATA.campaignExpenses.push(newExpense);
+            alert('✓ Thêm chi phí thành công!');
+        }
     }
     
     closeExpenseModalInline();
-    loadCampaignExpensesPage();
-    DATA.addAuditLog('ADD_EXPENSE', `Thêm chi phí: ${formData.name}`, AUTH.getCurrentUser().id);
+    await loadCampaignExpensesPage();
+    DATA.addAuditLog?.('ADD_EXPENSE', `Thêm/Cập nhật chi phí: ${formData.name}`, AUTH.getCurrentUser().id);
 }
 
 function editExpenseInline(id) {
-    const expense = DATA.campaignExpenses.find(e => e.id === id);
+    const expense = DATA.campaignExpenses.find(e => Number(e.id) === Number(id));
     if (!expense) return;
     
     editingExpenseIdInline = id;
     openExpenseModalInline(expense.campaignId);
     
     setTimeout(() => {
-        document.getElementById('expenseNameInline').value = expense.name;
-        document.getElementById('expenseTypeInline').value = expense.type;
-        document.getElementById('expenseAmountInline').value = expense.amount;
-        document.getElementById('expenseDateInline').value = expense.date;
-        document.getElementById('expenseNoteInline').value = expense.note || '';
-        document.querySelector('#expenseModalInline .modal-header h2').textContent = 'Sửa Chi phí';
+        const nameField = document.getElementById('expenseNameInline');
+        const typeField = document.getElementById('expenseTypeInline');
+        const amountField = document.getElementById('expenseAmountInline');
+        const dateField = document.getElementById('expenseDateInline');
+        const noteField = document.getElementById('expenseNoteInline');
+        
+        if (nameField) nameField.value = expense.name;
+        if (typeField) typeField.value = expense.type;
+        if (amountField) amountField.value = expense.amount;
+        if (dateField) dateField.value = expense.date;
+        if (noteField) noteField.value = expense.note || '';
+        
+        const titleEl = document.querySelector('#expenseModalInline .modal-header h2');
+        if (titleEl) titleEl.textContent = 'Sửa Chi phí';
     }, 100);
 }
 
-function deleteExpenseInline(id) {
+async function deleteExpenseInline(id) {
     if (!confirm('Bạn có chắc muốn xóa chi phí này?')) return;
     
-    DATA.campaignExpenses = DATA.campaignExpenses.filter(e => e.id !== id);
-    loadCampaignExpensesPage();
-    alert('✓ Đã xóa chi phí!');
-    DATA.addAuditLog('DELETE_EXPENSE', `Xóa chi phí ID: ${id}`, AUTH.getCurrentUser().id);
+    const isApiSession = AUTH.getCurrentUser()?.authSource === 'api';
+    
+    if (isApiSession) {
+        try {
+            await API_SERVICES.chiPhiChienDich.delete(Number(id));
+            alert('✓ Đã xóa chi phí (API)!');
+        } catch (error) {
+            console.error('Lỗi khi xóa chi phí:', error);
+            alert('Không thể xóa chi phí: ' + (error.message || 'Lỗi không xác định'));
+            return;
+        }
+    } else {
+        DATA.campaignExpenses = DATA.campaignExpenses.filter(e => Number(e.id) !== Number(id));
+        alert('✓ Đã xóa chi phí!');
+    }
+    
+    await loadCampaignExpensesPage();
+    DATA.addAuditLog?.('DELETE_EXPENSE', `Xóa chi phí ID: ${id}`, AUTH.getCurrentUser().id);
 }
 
 function viewCampaignExpensesDetail(campaignId) {
-    const campaign = DATA.campaigns.find(c => c.id === campaignId);
-    const expenses = DATA.campaignExpenses.filter(e => e.campaignId === campaignId);
+    const campaign = DATA.campaigns.find(c => Number(c.id) === Number(campaignId));
+    const expenses = DATA.campaignExpenses.filter(e => Number(e.campaignId) === Number(campaignId));
     
-    alert(`Chi tiết chi phí: ${campaign.name}\n\nTổng: ${expenses.length} khoản chi\nTổng tiền: ${formatCurrency(expenses.reduce((sum, e) => sum + e.amount, 0))}`);
+    if (!campaign) {
+        alert('Không tìm thấy chiến dịch.');
+        return;
+    }
+    
+    alert(`Chi tiết chi phí: ${campaign.name}\n\nTổng: ${expenses.length} khoản chi\nTổng tiền: ${formatCurrency(expenses.reduce((sum, e) => sum + Number(e.amount), 0))}`);
 }

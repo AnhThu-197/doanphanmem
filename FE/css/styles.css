@@ -624,3 +624,61 @@ table tbody tr:hover, .data-table tbody tr:hover {
         width: 100%;
     }
 }
+
+/* Detail Grid & Card Layouts */
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px;
+    margin-top: 24px;
+}
+
+.detail-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.detail-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-dark);
+}
+
+.detail-card h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px dashed var(--border-color);
+    font-size: 13.5px;
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-row span {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.detail-row strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+

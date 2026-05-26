@@ -2,9 +2,92 @@
 // TRANG QUẢN LÝ KHÁCH HÀNG
 // ============================================
 
+function mapBackendCustomerToFrontend(c) {
+    return {
+        id: c.maKhachHang,
+        name: c.hoTen,
+        email: c.email,
+        phone: c.soDienThoai,
+        company: c.congTy || '',
+        status: mapBackendCustomerStatusToFrontend(c.trangThaiKhach),
+        source: mapBackendSourceToFrontend(c.tenNguonKH),
+        industry: c.tenNganhNghe || '',
+        score: c.diemTiemNang || 0,
+        createdDate: c.ngayTao ? c.ngayTao.split('T')[0] : '',
+        trialStartDate: c.ngayBatDauDungThu || null,
+        trialDays: c.soNgayDungThu || 0,
+        deleted: false
+    };
+}
+
+function mapBackendCustomerStatusToFrontend(status) {
+    switch (status) {
+        case 'Người truy cập': return 'suspect';
+        case 'KH tiềm năng mới': return 'lead';
+        case 'KH triển vọng': return 'prospect';
+        case 'KH chính thức': return 'customer';
+        case 'KH trung thành': return 'evangelist';
+        default: return 'suspect';
+    }
+}
+
+function mapFrontendCustomerStatusToBackend(status) {
+    switch (status) {
+        case 'suspect': return 'Người truy cập';
+        case 'lead': return 'KH tiềm năng mới';
+        case 'prospect': return 'KH triển vọng';
+        case 'customer': return 'KH chính thức';
+        case 'evangelist': return 'KH trung thành';
+        default: return 'Người truy cập';
+    }
+}
+
+function mapBackendSourceToFrontend(source) {
+    if (!source) return 'direct';
+    const s = source.toLowerCase();
+    if (s.includes('facebook')) return 'facebook';
+    if (s.includes('google')) return 'google';
+    if (s.includes('website')) return 'website';
+    if (s.includes('giới thiệu') || s.includes('referral')) return 'referral';
+    return 'direct';
+}
+
 async function loadCustomers() {
     const mainContent = document.getElementById('mainContent');
+    if (!mainContent) return;
+
     const user = AUTH.getCurrentUser();
+    const isApiSession = user?.authSource === 'api';
+
+    if (isApiSession) {
+        mainContent.innerHTML = `
+            <h2 class="page-title">Quản lý Khách hàng</h2>
+            <div style="text-align: center; padding: 40px;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: #3b82f6; margin-bottom: 16px;"></i>
+                <p style="color: #64748b;">Đang tải danh sách khách hàng...</p>
+            </div>
+        `;
+        try {
+            const response = await API_SERVICES.khachHang.list();
+            const list = response.data || response;
+            DATA.customers = list.map(mapBackendCustomerToFrontend);
+        } catch (error) {
+            console.error('Lỗi khi tải khách hàng:', error);
+            mainContent.innerHTML = `
+                <h2 class="page-title">Quản lý Khách hàng</h2>
+                <div style="background: #fef2f2; border: 1px solid #fee2e2; border-radius: 8px; padding: 24px; text-align: center; margin-top: 20px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ef4444; margin-bottom: 16px;"></i>
+                    <h3 style="color: #991b1b; margin-bottom: 8px;">Không thể kết nối đến hệ thống</h3>
+                    <p style="color: #7f1d1d; margin-bottom: 16px;">Đã xảy ra lỗi khi tải danh sách khách hàng: ${error.message || 'Lỗi không xác định'}</p>
+                    <button class="btn btn-primary" onclick="loadCustomers()">Thử lại</button>
+                </div>
+            `;
+            return;
+        }
+    }
+
+    const canDelete = user && user.role !== 'employee';
+    const isManagerOrAdmin = user && (user.role === 'manager' || user.role === 'admin');
 
     const roleRaw = removeVietnameseAccentForMap(
         user?.role || user?.vaiTro || user?.chucVu || ''
@@ -350,6 +433,7 @@ async function saveCustomer(e) {
             parseInt(document.getElementById('customerTrialDays').value) || 0
     };
 
+<<<<<<< HEAD
     console.log('Payload gửi lên backend:', payload);
 
     try {
@@ -368,9 +452,50 @@ async function saveCustomer(e) {
     } catch (error) {
         console.error('Lỗi lưu khách hàng:', error);
         alert('Lưu khách hàng thất bại. Kiểm tra F12 → Network → POST/PUT /khach-hang.');
+=======
+    const isApiSession = currentUser?.authSource === 'api';
+
+    if (isApiSession) {
+        const payloadBackend = {
+            hoTen: data.name,
+            email: data.email,
+            soDienThoai: data.phone,
+            congTy: data.company,
+            trangThaiKhach: mapFrontendCustomerStatusToBackend(data.status),
+            ngayBatDauDungThu: data.trialStartDate,
+            soNgayDungThu: data.trialDays,
+            maNguoiPhuTrach: data.assignedTo
+        };
+        try {
+            if (customerId) {
+                await API_SERVICES.khachHang.update(parseInt(customerId), payloadBackend);
+                alert('✓ Cập nhật khách hàng thành công (API)!');
+                DATA.addAuditLog?.('UPDATE_CUSTOMER', `Cập nhật (API): ${data.name}`, currentUser.id);
+            } else {
+                await API_SERVICES.khachHang.create(payloadBackend);
+                alert('✓ Thêm khách hàng thành công (API)!');
+                DATA.addAuditLog?.('ADD_CUSTOMER', `Thêm (API): ${data.name}`, currentUser.id);
+            }
+        } catch (error) {
+            console.error('Lỗi khi lưu khách hàng:', error);
+            alert('Không thể lưu khách hàng: ' + (error.message || 'Lỗi không xác định'));
+            return;
+        }
+    } else {
+        if (customerId) {
+            const c = DATA.customers.find(c => c.id === parseInt(customerId));
+            if (c) { Object.assign(c, data); alert('✓ Cập nhật khách hàng thành công!'); DATA.addAuditLog('UPDATE_CUSTOMER', `Cập nhật: ${data.name}`, currentUser.id); }
+        } else {
+            const newId = Math.max(...DATA.customers.map(c => c.id), 0) + 1;
+            DATA.customers.push({ id: newId, ...data, score: 0, createdDate: now, lastInteraction: '', deleted: false });
+            alert('✓ Thêm khách hàng thành công!');
+            DATA.addAuditLog('ADD_CUSTOMER', `Thêm: ${data.name}`, currentUser.id);
+        }
+>>>>>>> feature/minh-chien
     }
 }
 
+<<<<<<< HEAD
 // Chuyển trạng thái trên giao diện sang trạng thái trong database/backend
 function mapUIStatusToBackend(status) {
     const value = removeVietnameseAccentForMap(status);
@@ -501,7 +626,29 @@ async function deleteCustomer(id) {
     } catch (error) {
         console.error('Lỗi xóa khách hàng:', error);
         alert('Xóa khách hàng thất bại. Kiểm tra F12 → Network → DELETE /khach-hang/{id}.');
+=======
+async function deleteCustomer(id) {
+    if (!confirm('Bạn có chắc muốn xóa khách hàng này?')) return;
+
+    const currentUser = AUTH.getCurrentUser();
+    const isApiSession = currentUser?.authSource === 'api';
+
+    if (isApiSession) {
+        try {
+            await API_SERVICES.khachHang.delete(parseInt(id), 'Xóa từ giao diện quản lý');
+            alert('✓ Đã xóa khách hàng thành công!');
+            DATA.addAuditLog?.('DELETE_CUSTOMER', `Xóa (API): ID ${id}`, currentUser.id);
+        } catch (error) {
+            console.error('Lỗi khi xóa khách hàng:', error);
+            alert('Không thể xóa khách hàng: ' + (error.message || 'Lỗi không xác định'));
+            return;
+        }
+    } else {
+        const c = DATA.customers.find(c => c.id === id);
+        if (c) { c.deleted = true; c.deletedDate = new Date().toLocaleDateString('vi-VN'); }
+>>>>>>> feature/minh-chien
     }
+    loadCustomers();
 }
 
 function requestDeleteCustomer(customerId) {

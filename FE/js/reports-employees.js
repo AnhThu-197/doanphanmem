@@ -2,9 +2,45 @@
 // BÁO CÁO & THỐNG KÊ
 // ============================================
 
-function loadReports() {
+async function loadReports() {
     const mainContent = document.getElementById('mainContent');
-    
+    if (!mainContent) return;
+
+    const isApiSession = AUTH.getCurrentUser()?.authSource === 'api';
+
+    if (isApiSession) {
+        mainContent.innerHTML = `
+            <h2 class="page-title">Báo cáo & Thống kê</h2>
+            <div style="text-align: center; padding: 40px;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: #3b82f6; margin-bottom: 16px;"></i>
+                <p style="color: #64748b;">Đang tải dữ liệu báo cáo...</p>
+            </div>
+        `;
+        try {
+            const [custRes, campRes] = await Promise.all([
+                API_SERVICES.khachHang.list(),
+                API_SERVICES.chienDich.list()
+            ]);
+            const customersList = custRes.data || custRes;
+            const campaignsList = campRes.data || campRes;
+
+            DATA.customers = customersList.map(mapBackendCustomerToFrontend);
+            DATA.campaigns = campaignsList.map(mapBackendCampaignToFrontend);
+        } catch (error) {
+            console.error('Lỗi khi tải dữ liệu báo cáo:', error);
+            mainContent.innerHTML = `
+                <h2 class="page-title">Báo cáo & Thống kê</h2>
+                <div style="background: #fef2f2; border: 1px solid #fee2e2; border-radius: 8px; padding: 24px; text-align: center; margin-top: 20px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ef4444; margin-bottom: 16px;"></i>
+                    <h3 style="color: #991b1b; margin-bottom: 8px;">Không thể kết nối đến hệ thống</h3>
+                    <p style="color: #7f1d1d; margin-bottom: 16px;">Đã xảy ra lỗi khi tải dữ liệu báo cáo: ${error.message || 'Lỗi không xác định'}</p>
+                    <button class="btn btn-primary" onclick="loadReports()">Thử lại</button>
+                </div>
+            `;
+            return;
+        }
+    }
+
     mainContent.innerHTML = `
         <h2 class="page-title">Báo cáo & Thống kê</h2>
         

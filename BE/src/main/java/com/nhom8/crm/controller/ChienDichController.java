@@ -1,22 +1,30 @@
 package com.nhom8.crm.controller;
 
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.nhom8.crm.dto.request.ChienDichRequest;
 import com.nhom8.crm.dto.response.ApiResponse;
-import com.nhom8.crm.entity.ChienDich;
-import com.nhom8.crm.exception.ResourceNotFoundException;
-import com.nhom8.crm.repository.ChienDichRepository;
-import com.nhom8.crm.repository.NhanVienRepository;
+import com.nhom8.crm.dto.response.ChienDichResponse;
+import com.nhom8.crm.service.ChienDichService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 @RestController
 @RequestMapping("/chien-dich")
@@ -24,74 +32,88 @@ import java.util.List;
 @Tag(name = "Chiến dịch", description = "Quản lý chiến dịch marketing")
 public class ChienDichController {
 
-    private final ChienDichRepository chienDichRepository;
-    private final NhanVienRepository nhanVienRepository;
+    private final ChienDichService chienDichService;
 
     @GetMapping
     @Operation(summary = "Lấy danh sách chiến dịch")
-    public ResponseEntity<ApiResponse<List<ChienDich>>> getAll() {
-        return ResponseEntity.ok(ApiResponse.ok(chienDichRepository.findByDaXoaFalse()));
+    public ResponseEntity<ApiResponse<List<ChienDichResponse>>> getAll() {
+        return ResponseEntity.ok(ApiResponse.ok(chienDichService.getAll()));
+    }
+
+    @GetMapping("/thung-rac")
+    @Operation(summary = "Lấy danh sách chiến dịch đã xóa")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<ApiResponse<List<ChienDichResponse>>> getTrash() {
+        return ResponseEntity.ok(ApiResponse.ok(chienDichService.getTrash()));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Lấy chi tiết chiến dịch")
-    public ResponseEntity<ApiResponse<ChienDich>> getById(@PathVariable Integer id) {
-        ChienDich cd = chienDichRepository.findById(id)
-                .filter(c -> !c.getDaXoa())
-                .orElseThrow(() -> new ResourceNotFoundException("Chiến dịch", id));
-        return ResponseEntity.ok(ApiResponse.ok(cd));
+    public ResponseEntity<ApiResponse<ChienDichResponse>> getById(@PathVariable Integer id) {
+        return ResponseEntity.ok(ApiResponse.ok(chienDichService.getById(id)));
+    }
+
+    @GetMapping("/search")
+    @Operation(summary = "Tìm kiếm chiến dịch")
+    public ResponseEntity<ApiResponse<List<ChienDichResponse>>> search(@RequestParam String keyword) {
+        return ResponseEntity.ok(ApiResponse.ok(chienDichService.search(keyword)));
     }
 
     @PostMapping
     @Operation(summary = "Tạo chiến dịch mới")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ResponseEntity<ApiResponse<ChienDich>> create(
+    public ResponseEntity<ApiResponse<ChienDichResponse>> create(
             @Valid @RequestBody ChienDichRequest request) {
-        ChienDich cd = buildFromRequest(new ChienDich(), request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok("Tạo chiến dịch thành công",
-                        chienDichRepository.save(cd)));
+                        chienDichService.create(request)));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Cập nhật chiến dịch")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ResponseEntity<ApiResponse<ChienDich>> update(
+    public ResponseEntity<ApiResponse<ChienDichResponse>> update(
             @PathVariable Integer id,
             @Valid @RequestBody ChienDichRequest request) {
-        ChienDich cd = chienDichRepository.findById(id)
-                .filter(c -> !c.getDaXoa())
-                .orElseThrow(() -> new ResourceNotFoundException("Chiến dịch", id));
-        buildFromRequest(cd, request);
         return ResponseEntity.ok(ApiResponse.ok("Cập nhật thành công",
-                chienDichRepository.save(cd)));
+                chienDichService.update(id, request)));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Xóa chiến dịch")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Integer id) {
-        ChienDich cd = chienDichRepository.findById(id)
-                .filter(c -> !c.getDaXoa())
-                .orElseThrow(() -> new ResourceNotFoundException("Chiến dịch", id));
-        cd.setDaXoa(true);
-        cd.setNgayXoa(LocalDateTime.now());
-        chienDichRepository.save(cd);
+    public ResponseEntity<ApiResponse<Void>> delete(
+            @PathVariable Integer id,
+            @RequestParam(required = false) String lyDo) {
+        chienDichService.delete(id, lyDo);
         return ResponseEntity.ok(ApiResponse.ok("Xóa chiến dịch thành công", null));
     }
 
-    private ChienDich buildFromRequest(ChienDich cd, ChienDichRequest req) {
-        cd.setTenChienDich(req.getTenChienDich());
-        cd.setMoTa(req.getMoTa());
-        cd.setMucTieu(req.getMucTieu());
-        cd.setLoaiChienDich(req.getLoaiChienDich());
-        cd.setNgayBatDau(req.getNgayBatDau());
-        cd.setNgayKetThuc(req.getNgayKetThuc());
-        cd.setNganSach(req.getNganSach());
-        if (req.getTrangThaiChienDich() != null) cd.setTrangThaiChienDich(req.getTrangThaiChienDich());
-        if (req.getMaNguoiQuanLy() != null) {
-            cd.setNguoiQuanLy(nhanVienRepository.findById(req.getMaNguoiQuanLy()).orElse(null));
-        }
-        return cd;
+    @PutMapping("/{id}/khoi-phuc")
+    @Operation(summary = "Khôi phục chiến dịch đã xóa")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<ApiResponse<ChienDichResponse>> restore(@PathVariable Integer id) {
+        return ResponseEntity.ok(ApiResponse.ok("Khôi phục thành công",
+                chienDichService.restore(id)));
+    }
+
+    @DeleteMapping("/{id}/vinh-vien")
+    @Operation(summary = "Xóa vĩnh viễn chiến dịch")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<ApiResponse<Void>> deletePermanently(@PathVariable Integer id) {
+        chienDichService.deletePermanently(id);
+        return ResponseEntity.ok(ApiResponse.ok("Xóa vĩnh viễn chiến dịch thành công", null));
+    }
+
+    @GetMapping("/{id}/roi")
+    @Operation(summary = "Tính toán ROI chiến dịch")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> calculateROI(@PathVariable Integer id) {
+        return ResponseEntity.ok(ApiResponse.ok(chienDichService.calculateROI(id)));
+    }
+
+    @GetMapping("/statistics")
+    @Operation(summary = "Lấy thống kê chiến dịch")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getStatistics() {
+        return ResponseEntity.ok(ApiResponse.ok(chienDichService.getStatistics()));
     }
 }
