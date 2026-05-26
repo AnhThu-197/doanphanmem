@@ -431,101 +431,6 @@ CREATE TABLE LichSuDongBoAPI (
     ghiChu NVARCHAR(500) NULL
 );
 GO
--- ================================================================
--- KIỂM TRA RÀNG BUỘC
--- ================================================================
-
--- ----------------------------------------------------------------
--- RC01: Ràng buộc email hợp lệ cho bảng TaiKhoan
--- ----------------------------------------------------------------
---ALTER TABLE TaiKhoan
---ADD CONSTRAINT CHK_EmailTaiKhoan
---    CHECK (email LIKE '%_@_%._%');
---GO
-
--- ----------------------------------------------------------------
--- RC02: Ràng buộc email hợp lệ cho bảng KhachHang
--- ----------------------------------------------------------------
---ALTER TABLE KhachHang
---ADD CONSTRAINT CHK_EmailKhachHang
---    CHECK (email LIKE '%_@_%._%');
---GO
-
--- ----------------------------------------------------------------
--- RC03: Ràng buộc số điện thoại (chỉ chứa chữ số, 9-11 ký tự)
--- ----------------------------------------------------------------
---ALTER TABLE KhachHang
---ADD CONSTRAINT CHK_SoDTKhachHang
---    CHECK (soDienThoai NOT LIKE '%[^0-9]%' AND LEN(soDienThoai) BETWEEN 10 AND 11);
---GO
-
---ALTER TABLE NhanVien
---ADD CONSTRAINT CHK_SoDTNhanVien
---    CHECK (soDienThoai IS NULL OR
---          (soDienThoai NOT LIKE '%[^0-9]%' AND LEN(soDienThoai) BETWEEN 10 AND 11));
---GO
-
--- ----------------------------------------------------------------
--- RC04: Ràng buộc ngày sinh không được ở tương lai
--- ----------------------------------------------------------------
---ALTER TABLE KhachHang
---ADD CONSTRAINT CHK_NgaySinhKH
---    CHECK (ngaySinh IS NULL OR ngaySinh <= CAST(GETDATE() AS DATE));
---GO
-
---ALTER TABLE NhanVien
---ADD CONSTRAINT CHK_NgaySinhNV
---    CHECK (ngaySinh IS NULL OR ngaySinh <= CAST(GETDATE() AS DATE));
---GO
-
--- ----------------------------------------------------------------
--- RC05: Ràng buộc điểm tiềm năng trong khoảng [0, 1000]
--- ----------------------------------------------------------------
---ALTER TABLE KhachHang
---ADD CONSTRAINT CHK_DiemTiemNang
---    CHECK (diemTiemNang BETWEEN 0 AND 1000);
---GO
-
--- ----------------------------------------------------------------
--- RC06: Ràng buộc nhắc trước số phút hợp lệ [0, 10080] (tối đa 7 ngày)
--- ----------------------------------------------------------------
---ALTER TABLE NhacNho
---ADD CONSTRAINT CHK_NhacTruocPhut
---    CHECK (nhacTruocPhut BETWEEN 0 AND 10080);
---GO
-
--- ----------------------------------------------------------------
--- RC07: Ràng buộc mã màu sắc thẻ phân loại (hex color)
--- ----------------------------------------------------------------
---ALTER TABLE ThePhanLoai
---ADD CONSTRAINT CHK_MauSacThe
---    CHECK (mauSac LIKE '#%' AND LEN(mauSac) IN (4, 7));
---GO
-
--- ----------------------------------------------------------------
--- RC08: Ràng buộc ngân sách kênh truyền thông không âm
--- ----------------------------------------------------------------
---ALTER TABLE KenhTruyenThong
---ADD CONSTRAINT CHK_NganSachKenh
---    CHECK (nganSachDuKien >= 0);
---GO
-
--- ----------------------------------------------------------------
--- RC09: Ràng buộc ngày chốt đơn phải sau ngày tạo hợp đồng
--- ----------------------------------------------------------------
---ALTER TABLE HopDong_GiaoDich
---ADD CONSTRAINT CHK_NgayChotDon
---    CHECK (ngayChotDon IS NULL OR ngayChotDon >= CAST(ngayTao AS DATE));
---GO
-
--- ----------------------------------------------------------------
--- RC10: Ràng buộc số ngày dùng thử không âm
--- ----------------------------------------------------------------
---ALTER TABLE KhachHang
---ADD CONSTRAINT CHK_SoNgayDungThu
---    CHECK (soNgayDungThu >= 0);
---GO
-
 
 -- ================================================================
 -- PHẦN 2: DỮ LIỆU MẪU
@@ -1805,3 +1710,14 @@ CREATE INDEX IDX_ThongBao_ChuaDoc       ON ThongBao (maNhanVien, daDoc) WHERE da
 -- Index cho chiến dịch đang chạy
 CREATE INDEX IDX_ChienDich_TrangThai    ON ChienDich (trangThaiChienDich) WHERE daXoa = 0;
 GO
+
+
+USE DoAnPhanMem_Nhom8;
+GO
+
+UPDATE TaiKhoan SET matKhau = '$2a$10$K..lmMgIH8algAaThnzxKOW3WdNOwKLmGYnIzU3NoU4Qf5k96nOL2' WHERE email = 'admin@gmail.com';
+UPDATE TaiKhoan SET matKhau = '$2a$10$lk2bwA//Fv2JykiD/tHCqO9fTUu7LiI4DKQ3A4VUZbzZ13l.H33ya' WHERE email = 'anhthu@gmail.com';
+UPDATE TaiKhoan SET matKhau = '$2a$10$MVWWGAhDXz096p6UNfynXOwYThXY.6SgPG1cTpb96.09CHwM5K0aa' WHERE email = 'nv01@crm.vn';
+
+-- Kiem tra
+SELECT email, LEFT(matKhau, 20) FROM TaiKhoan WHERE email IN ('admin@gmail.com', 'anhthu@gmail.com', 'nv01@crm.vn');

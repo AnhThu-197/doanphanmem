@@ -10,7 +10,7 @@ public class TrungLapKhachHangResponse {
     private String id;
     private CustomerDetail customer1;
     private CustomerDetail customer2;
-    private Integer similarity;
+    private Double similarity;
 
     @Data
     @Builder

@@ -10,7 +10,13 @@ import java.util.List;
 @Repository
 public interface LichSuTuongTacRepository extends JpaRepository<LichSuTuongTac, Integer> {
 
+    List<LichSuTuongTac> findAllByOrderByThoiGianTaoDesc();
+
     List<LichSuTuongTac> findByKhachHang_MaKhachHangOrderByThoiGianTaoDesc(
+            Integer maKhachHang
+    );
+
+    List<LichSuTuongTac> findByKhachHangMaKhachHangOrderByThoiGianTaoDesc(
             Integer maKhachHang
     );
 

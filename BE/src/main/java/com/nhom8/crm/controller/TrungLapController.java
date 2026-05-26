@@ -32,7 +32,7 @@ public class TrungLapController {
                 .map(pair -> {
                     KhachHang k1 = (KhachHang) pair[0];
                     KhachHang k2 = (KhachHang) pair[1];
-                    int similarity = khachHangService.calculateSimilarity(k1.getHoTen(), k2.getHoTen());
+                    double similarity = khachHangService.calculateSimilarity(k1.getHoTen(), k2.getHoTen());
 
                     return TrungLapKhachHangResponse.builder()
                             .id(k1.getMaKhachHang() + "_" + k2.getMaKhachHang())

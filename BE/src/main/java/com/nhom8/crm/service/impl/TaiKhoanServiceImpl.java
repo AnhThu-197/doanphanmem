@@ -55,7 +55,9 @@ public class TaiKhoanServiceImpl implements TaiKhoanService {
         TaiKhoan existing = getTaiKhoanById(id);
         
         // Cập nhật các trường
-        existing.setMaVaiTro(updateInfo.getMaVaiTro());
+        if (updateInfo.getVaiTro() != null) {
+            existing.setVaiTro(updateInfo.getVaiTro());
+        }
         existing.setTrangThai(updateInfo.getTrangThai());
         existing.setNgayCapNhat(LocalDateTime.now());
         

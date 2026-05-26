@@ -12,6 +12,12 @@ import java.util.List;
 @Repository
 public interface NhacNhoRepository extends JpaRepository<NhacNho, Integer> {
 
+    List<NhacNho> findAllByOrderByThoiGianNhacDesc();
+
+    List<NhacNho> findByKhachHangMaKhachHangOrderByThoiGianNhacDesc(Integer maKhachHang);
+
+    List<NhacNho> findByNhanVienMaNhanVienOrderByThoiGianNhacDesc(Integer maNhanVien);
+
     List<NhacNho> findByNhanVien_MaNhanVienAndTrangThaiNhacNho(
             Integer maNhanVien,
             String trangThai
@@ -27,6 +33,17 @@ public interface NhacNhoRepository extends JpaRepository<NhacNho, Integer> {
     List<NhacNho> findUpcomingReminders(
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to
+    );
+
+    @Query(value = "EXEC sp_ThemNhacNho :maKhachHang, :maNhanVien, :tieuDe, :noiDung, :thoiGianNhac, :loaiNhacNho, :trangThaiNhacNho", nativeQuery = true)
+    List<Object[]> callSpThemNhacNho(
+            @Param("maKhachHang") Integer maKhachHang,
+            @Param("maNhanVien") Integer maNhanVien,
+            @Param("tieuDe") String tieuDe,
+            @Param("noiDung") String noiDung,
+            @Param("thoiGianNhac") LocalDateTime thoiGianNhac,
+            @Param("loaiNhacNho") Integer loaiNhacNho,
+            @Param("trangThaiNhacNho") String trangThaiNhacNho
     );
 
     @org.springframework.data.jpa.repository.Modifying

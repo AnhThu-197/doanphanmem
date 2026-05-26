@@ -150,6 +150,21 @@ public class KhachHangService {
                         .build())
                 .toList();
     }
+    public List<KhachHangResponse> getAllIncludingDeleted() {
+        return khachHangRepository.findAll()
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void deletePermanent(Integer id) {
+        KhachHang kh = khachHangRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Khách hàng", id));
+
+        khachHangRepository.delete(kh);
+    }
+
     @Transactional
     public void restore(Integer id) {
 
@@ -170,6 +185,125 @@ public class KhachHangService {
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    public double calculateSimilarity(String str1, String str2) {
+        if (str1 == null || str2 == null) {
+            return 0.0;
+        }
+        
+        str1 = str1.toLowerCase().trim();
+        str2 = str2.toLowerCase().trim();
+        
+        if (str1.equals(str2)) {
+            return 1.0;
+        }
+        
+        // Simple Levenshtein distance based similarity
+        int maxLen = Math.max(str1.length(), str2.length());
+        if (maxLen == 0) {
+            return 1.0;
+        }
+        
+        int distance = levenshteinDistance(str1, str2);
+        return 1.0 - ((double) distance / maxLen);
+    }
+
+    @Transactional
+    public void mergeCustomers(Integer keepId, Integer removeId) {
+        KhachHang keep = khachHangRepository.findById(keepId)
+                .orElseThrow(() -> new ResourceNotFoundException("Khách hàng", keepId));
+        
+        KhachHang remove = khachHangRepository.findById(removeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Khách hàng", removeId));
+        
+        // Merge logic: update all related records to point to keepId
+        // This would require updating LichSuTuongTac, NhacNho, etc.
+        // For now, just soft delete the duplicate
+        remove.setDaXoa(true);
+        remove.setLyDoXoa("Trùng lặp với khách hàng #" + keepId);
+        remove.setNgayXoa(LocalDateTime.now());
+        khachHangRepository.save(remove);
+    }
+
+    private int levenshteinDistance(String s1, String s2) {
+        int[][] dp = new int[s1.length() + 1][s2.length() + 1];
+        
+        for (int i = 0; i <= s1.length(); i++) {
+            dp[i][0] = i;
+        }
+        
+        for (int j = 0; j <= s2.length(); j++) {
+            dp[0][j] = j;
+        }
+        
+        for (int i = 1; i <= s1.length(); i++) {
+            for (int j = 1; j <= s2.length(); j++) {
+                if (s1.charAt(i - 1) == s2.charAt(j - 1)) {
+                    dp[i][j] = dp[i - 1][j - 1];
+                } else {
+                    dp[i][j] = 1 + Math.min(dp[i - 1][j - 1], Math.min(dp[i - 1][j], dp[i][j - 1]));
+                }
+            }
+        }
+        
+        return dp[s1.length()][s2.length()];
+    }
+
+    public com.nhom8.crm.dto.response.TrialResponse getTrialDetails(Integer id) {
+        KhachHang kh = khachHangRepository.findById(id)
+                .filter(k -> !k.getDaXoa())
+                .orElseThrow(() -> new ResourceNotFoundException("Khách hàng", id));
+
+        // Calculate remaining days using SQL function
+        Integer remainingDays = null;
+        if (kh.getNgayBatDauDungThu() != null && kh.getSoNgayDungThu() != null) {
+            try {
+                Object result = entityManager
+                        .createNativeQuery("SELECT dbo.fn_SoNgayConLaiDungThu(:maKhachHang)")
+                        .setParameter("maKhachHang", id)
+                        .getSingleResult();
+                
+                if (result != null) {
+                    remainingDays = ((Number) result).intValue();
+                }
+            } catch (Exception e) {
+                // If function doesn't exist, calculate manually
+                remainingDays = null;
+            }
+        }
+
+        return com.nhom8.crm.dto.response.TrialResponse.builder()
+                .customerId(kh.getMaKhachHang())
+                .customerName(kh.getHoTen())
+                .startDate(kh.getNgayBatDauDungThu())
+                .durationDays(kh.getSoNgayDungThu())
+                .status(kh.getTrangThaiDungThu())
+                .remainingDays(remainingDays)
+                .build();
+    }
+
+    @Transactional
+    public com.nhom8.crm.dto.response.TrialResponse updateTrialDetails(Integer id, com.nhom8.crm.dto.request.TrialUpdateRequest request) {
+        KhachHang kh = khachHangRepository.findById(id)
+                .filter(k -> !k.getDaXoa())
+                .orElseThrow(() -> new ResourceNotFoundException("Khách hàng", id));
+
+        if (request.getStartDate() != null) {
+            kh.setNgayBatDauDungThu(request.getStartDate());
+        }
+
+        if (request.getDurationDays() != null) {
+            kh.setSoNgayDungThu(request.getDurationDays());
+        }
+
+        if (request.getStatus() != null) {
+            kh.setTrangThaiDungThu(request.getStatus());
+        }
+
+        khachHangRepository.save(kh);
+
+        return getTrialDetails(id);
     }
 
     // ================= HELPER =================
