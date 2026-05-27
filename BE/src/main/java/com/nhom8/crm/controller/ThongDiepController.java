@@ -41,6 +41,67 @@ public class ThongDiepController {
         return ResponseEntity.ok(ApiResponse.ok(mauThongDiepRepository.findAll()));
     }
 
+    @PostMapping("/mau")
+    @Operation(summary = "Tạo mẫu thông điệp mới")
+    public ResponseEntity<ApiResponse<MauThongDiep>> createTemplate(
+            @RequestBody Map<String, String> payload,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        var nhanVien = nhanVienRepository.findByTaiKhoan_Email(userDetails.getUsername())
+                .orElse(null);
+                
+        String loai = payload.get("type");
+        if (loai == null || loai.trim().isEmpty()) {
+            loai = "Email";
+        } else {
+            loai = "sms".equalsIgnoreCase(loai) ? "SMS" : ("zalo".equalsIgnoreCase(loai) ? "Zalo" : "Email");
+        }
+
+        MauThongDiep mau = MauThongDiep.builder()
+                .tieuDe(payload.get("name"))
+                .noiDung(payload.get("content"))
+                .loaiThongDiep(loai)
+                .nhanVienTao(nhanVien)
+                .luotSuDung(0)
+                .build();
+
+        return ResponseEntity.ok(ApiResponse.ok("Tạo mẫu tin nhắn thành công", 
+                mauThongDiepRepository.save(mau)));
+    }
+
+    @PutMapping("/mau/{id}")
+    @Operation(summary = "Cập nhật mẫu thông điệp")
+    public ResponseEntity<ApiResponse<MauThongDiep>> updateTemplate(
+            @PathVariable Integer id,
+            @RequestBody Map<String, String> payload) {
+        MauThongDiep mau = mauThongDiepRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Mẫu thông điệp", id));
+
+        String loai = payload.get("type");
+        if (loai != null && !loai.trim().isEmpty()) {
+            loai = "sms".equalsIgnoreCase(loai) ? "SMS" : ("zalo".equalsIgnoreCase(loai) ? "Zalo" : "Email");
+            mau.setLoaiThongDiep(loai);
+        }
+
+        if (payload.get("name") != null) {
+            mau.setTieuDe(payload.get("name"));
+        }
+        if (payload.get("content") != null) {
+            mau.setNoiDung(payload.get("content"));
+        }
+
+        return ResponseEntity.ok(ApiResponse.ok("Cập nhật mẫu tin nhắn thành công", 
+                mauThongDiepRepository.save(mau)));
+    }
+
+    @DeleteMapping("/mau/{id}")
+    @Operation(summary = "Xóa mẫu thông điệp")
+    public ResponseEntity<ApiResponse<Void>> deleteTemplate(@PathVariable Integer id) {
+        MauThongDiep mau = mauThongDiepRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Mẫu thông điệp", id));
+        mauThongDiepRepository.delete(mau);
+        return ResponseEntity.ok(ApiResponse.ok("Xóa mẫu tin nhắn thành công", null));
+    }
+
     @GetMapping("/lich-su")
     @Operation(summary = "Lấy lịch sử gửi thông điệp theo vai trò của người dùng hiện tại")
     public ResponseEntity<ApiResponse<List<LichSuGuiThongDiep>>> getLichSu(
@@ -81,6 +142,38 @@ public class ThongDiepController {
         
         String tieuDe = payload.getOrDefault("promoTitle", "Thông điệp Marketing");
         String content = payload.get("content");
+        
+        // Append promotion/voucher information if attached
+        String promoCode = payload.get("promoCode");
+        String promoDesc = payload.get("promoDescription");
+        String promoExpiry = payload.get("promoExpiry");
+        String promoLink = payload.get("promoLink");
+
+        StringBuilder fullContent = new StringBuilder(content != null ? content : "");
+        boolean hasPromo = (promoCode != null && !promoCode.trim().isEmpty())
+                || (promoDesc != null && !promoDesc.trim().isEmpty())
+                || (promoExpiry != null && !promoExpiry.trim().isEmpty())
+                || (promoLink != null && !promoLink.trim().isEmpty());
+
+        if (hasPromo) {
+            fullContent.append("\n\n🎁 QUÀ TẶNG / KHUYẾN MÃI ĐI KÈM:");
+            if (tieuDe != null && !tieuDe.trim().isEmpty() && !"Thông điệp Marketing".equals(tieuDe.trim())) {
+                fullContent.append("\n📌 Tiêu đề: ").append(tieuDe.trim());
+            }
+            if (promoCode != null && !promoCode.trim().isEmpty()) {
+                fullContent.append("\n🔑 Mã giảm giá (Voucher): ").append(promoCode.trim());
+            }
+            if (promoDesc != null && !promoDesc.trim().isEmpty()) {
+                fullContent.append("\n📝 Chi tiết: ").append(promoDesc.trim());
+            }
+            if (promoExpiry != null && !promoExpiry.trim().isEmpty()) {
+                fullContent.append("\n📅 Ngày hết hạn: ").append(promoExpiry.trim());
+            }
+            if (promoLink != null && !promoLink.trim().isEmpty()) {
+                fullContent.append("\n🔗 Liên kết nhận: ").append(promoLink.trim());
+            }
+        }
+        content = fullContent.toString();
         
         Integer maMau = null;
         if (payload.get("templateId") != null && !payload.get("templateId").isEmpty()) {

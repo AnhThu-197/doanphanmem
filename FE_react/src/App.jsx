@@ -181,7 +181,12 @@ export default function App() {
   useEffect(() => {
     const stored = localStorage.getItem('currentUser');
     if (stored) {
-      setUser(JSON.parse(stored));
+      try {
+        setUser(JSON.parse(stored));
+      } catch (e) {
+        console.error('Invalid user JSON in localStorage:', e);
+        localStorage.removeItem('currentUser');
+      }
     }
     loadData();
   }, []);
@@ -219,14 +224,18 @@ export default function App() {
 
       const storedUser = localStorage.getItem('currentUser');
       if (storedUser) {
-        const parsed = JSON.parse(storedUser);
-        if (parsed && parsed.role === 'admin') {
-          try {
-            const usersData = await API.getAllUsers();
-            setUsers(usersData);
-          } catch (e) {
-            console.error('Lỗi nạp danh sách tài khoản:', e);
+        try {
+          const parsed = JSON.parse(storedUser);
+          if (parsed && parsed.role === 'admin') {
+            try {
+              const usersData = await API.getAllUsers();
+              setUsers(usersData);
+            } catch (e) {
+              console.error('Lỗi nạp danh sách tài khoản:', e);
+            }
           }
+        } catch (e) {
+          console.error('Invalid user JSON in loadData:', e);
         }
       }
     } catch (err) {
@@ -1041,7 +1050,7 @@ export default function App() {
                       <div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
                           <span><i className="fas fa-user" style={{ color: '#4f6f80' }}></i> Nhân viên</span>
-                          strong>1 (33%)</strong>
+                          <strong>1 (33%)</strong>
                         </div>
                         <div style={{ background: '#f1f5f9', height: '10px', borderRadius: '5px', overflow: 'hidden' }}>
                           <div style={{ background: '#4f6f80', height: '100%', width: '33.3%' }}></div>

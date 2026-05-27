@@ -1655,6 +1655,47 @@ BEGIN
 END;
 GO
 
+-- ----------------------------------------------------------------
+-- TRG07: Tự động đồng bộ lịch sử gửi thông điệp sang Lịch sử tương tác
+-- ----------------------------------------------------------------
+CREATE TRIGGER trg_LichSuGuiThongDiep_DongBoTuongTac
+ON LichSuGuiThongDiep
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO LichSuTuongTac (
+        maKhachHang, 
+        maNhanVien, 
+        loaiTuongTac, 
+        tieuDe, 
+        noiDung, 
+        kenhLienLac, 
+        ketQua, 
+        thoiGianTao, 
+        ngayCapNhat
+    )
+    SELECT 
+        i.maKhachHang,
+        i.maNhanVien,
+        CASE 
+            WHEN i.kenhGui = N'Email' THEN N'Email'
+            ELSE N'Nhắn tin'
+        END,
+        ISNULL(i.tieuDe, N'Thông điệp ' + i.kenhGui),
+        i.noiDung,
+        i.kenhGui,
+        CASE 
+            WHEN i.trangThaiGui = N'Đã gửi' THEN N'Thành công'
+            ELSE N'Không liên lạc được'
+        END,
+        ISNULL(i.thoiGianGui, GETDATE()),
+        GETDATE()
+    FROM inserted i;
+END;
+GO
+
 -- TEST TRG06: trg_HopDong_ThangHopDong
  
 -- Xem doanh thu chiến dịch mã 2 và trạng thái khách hàng trước test

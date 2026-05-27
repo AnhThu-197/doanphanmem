@@ -215,6 +215,13 @@ function initLocalStorage() {
     );
   }
 
+  if (!localStorage.getItem("appointments")) {
+    localStorage.setItem(
+      "appointments",
+      JSON.stringify([])
+    );
+  }
+
   if (!localStorage.getItem("system_config")) {
     localStorage.setItem(
       "system_config",
@@ -270,7 +277,7 @@ export const API = {
             v.includes("admin") ||
             v.includes("quản trị")
               ? "admin"
-              : v.includes("trưởng phòng")
+              : v.includes("manager") || v.includes("trưởng phòng")
               ? "manager"
               : "employee";
 
@@ -373,7 +380,7 @@ export const API = {
 
   async getCustomers() {
     const response = await fetch(
-      `${BASE_URL}/khach-hang`,
+      `${BASE_URL}/khach-hang/all`,
       {
         headers: getHeaders(),
       }
@@ -446,5 +453,643 @@ export const API = {
     );
 
     return response.ok;
+  },
+
+  async permanentDeleteCustomer(id) {
+    const response = await fetch(
+      `${BASE_URL}/khach-hang/${id}/permanent`,
+      {
+        method: "DELETE",
+        headers: getHeaders(),
+      }
+    );
+
+    return response.ok;
+  },
+
+  // ======================
+  // TRIAL DETAILS
+  // ======================
+
+  async getTrialDetails(id) {
+    const response = await fetch(
+      `${BASE_URL}/khach-hang/${id}/dungthu`,
+      {
+        headers: getHeaders(),
+      }
+    );
+
+    if (response.ok) {
+      const resJson = await response.json();
+      return resJson.data;
+    }
+
+    throw new Error("Không thể lấy chi tiết dùng thử.");
+  },
+
+  async updateTrialDetails(targetId, startDate, durationDays, status) {
+    const response = await fetch(
+      `${BASE_URL}/khach-hang/${targetId}/dungthu`,
+      {
+        method: "PUT",
+        headers: getHeaders(),
+        body: JSON.stringify({ startDate, durationDays, status }),
+      }
+    );
+
+    if (response.ok) {
+      const resJson = await response.json();
+      return resJson.data;
+    }
+
+    throw new Error("Không thể cập nhật dùng thử.");
+  },
+
+  // ======================
+  // APPOINTMENTS (NHẮC NHỞ)
+  // ======================
+
+  async getAppointments() {
+    try {
+      const response = await fetch(
+        `${BASE_URL}/nhac-nho/cua-toi`,
+        {
+          headers: getHeaders(),
+        }
+      );
+
+      if (response.ok) {
+        const resJson = await response.json();
+
+        return (resJson.data || []).map((appt) => ({
+          id: appt.maNhacNho,
+          customerId: appt.khachHang
+            ? appt.khachHang.maKhachHang
+            : null,
+          customerName: appt.khachHang
+            ? appt.khachHang.hoTen
+            : "",
+          title: appt.tieuDe,
+          type:
+            appt.loaiNhacNho === "Gọi điện"
+              ? "call"
+              : appt.loaiNhacNho === "Email"
+              ? "email"
+              : "meeting",
+          date: appt.thoiGianNhac
+            ? appt.thoiGianNhac.substring(0, 10)
+            : "",
+          time: appt.thoiGianNhac
+            ? appt.thoiGianNhac.substring(11, 16)
+            : "",
+          reminderBefore: appt.nhacTruocPhut || 30,
+          notes: appt.moTa,
+          status:
+            appt.trangThaiNhacNho === "Chờ xử lý"
+              ? "scheduled"
+              : appt.trangThaiNhacNho === "Đã hoàn thành"
+              ? "completed"
+              : "cancelled",
+          result: appt.ketQua || "",
+          resultNotes: appt.ghiChuKetQua || "",
+        }));
+      }
+    } catch (e) {
+      console.error("Error fetching appointments", e);
+    }
+
+    const stored = localStorage.getItem("appointments");
+    return stored ? JSON.parse(stored) : [];
+  },
+
+  async createAppointment(apptForm) {
+    const loaiNhacNho =
+      apptForm.type === "call"
+        ? "Gọi điện"
+        : apptForm.type === "email"
+        ? "Email"
+        : "Gặp mặt";
+
+    const thoiGianNhac = `${apptForm.date}T${apptForm.time || "00:00"}`;
+
+    const payload = {
+      khachHang: {
+        maKhachHang: parseInt(apptForm.customerId),
+      },
+      tieuDe: apptForm.title,
+      loaiNhacNho: loaiNhacNho,
+      thoiGianNhac: thoiGianNhac,
+      nhacTruocPhut: parseInt(apptForm.reminderBefore) || 30,
+      moTa: apptForm.notes,
+      trangThaiNhacNho: "Chờ xử lý",
+    };
+
+    const response = await fetch(
+      `${BASE_URL}/nhac-nho`,
+      {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+
+    if (response.ok) {
+      const resJson = await response.json();
+      return resJson.data;
+    }
+
+    throw new Error("Lỗi lên lịch nhắc nhở cuộc hẹn.");
+  },
+
+  async updateAppointmentResult(id, result, resultNotes) {
+    const response = await fetch(
+      `${BASE_URL}/nhac-nho/${id}/hoan-thanh`,
+      {
+        method: "PATCH",
+        headers: getHeaders(),
+        body: JSON.stringify({
+          ketQua: result,
+          ghiChu: resultNotes,
+        }),
+      }
+    );
+
+    if (response.ok) {
+      const resJson = await response.json();
+      return resJson.data;
+    }
+
+    throw new Error("Lỗi cập nhật kết quả cuộc hẹn.");
+  },
+
+  async deleteAppointment(id) {
+    const response = await fetch(
+      `${BASE_URL}/nhac-nho/${id}`,
+      {
+        method: "DELETE",
+        headers: getHeaders(),
+      }
+    );
+
+    return response.ok;
+  },
+
+  // ======================
+  // INTERACTIONS (TƯƠNG TÁC)
+  // ======================
+
+  async getInteractions() {
+    try {
+      const response = await fetch(
+        `${BASE_URL}/tuongtac`,
+        {
+          headers: getHeaders(),
+        }
+      );
+
+      if (response.ok) {
+        const resJson = await response.json();
+
+        return (resJson || []).map((inter) => ({
+          id: inter.id,
+          customerId: inter.customerId,
+          customerName: inter.customerName,
+          employeeId: inter.employeeId,
+          employeeName: inter.employeeName,
+          type:
+            inter.type === "meeting"
+              ? "meeting"
+              : inter.type === "email"
+              ? "email"
+              : inter.type === "message"
+              ? "message"
+              : "call",
+          content: inter.content,
+          notes: inter.notes,
+          date: inter.date
+            ? inter.date.substring(0, 10)
+            : "",
+          attachments: (inter.attachments || []).map(
+            (att) => ({
+              id: att.id,
+              fileName: att.fileName,
+              fileType: att.fileType,
+              fileSize: att.fileSize,
+              downloadUrl: `${BASE_URL}/tuongtac/files/${att.id}`,
+            })
+          ),
+        }));
+      }
+    } catch (e) {
+      console.error("Error fetching interactions", e);
+    }
+
+    const stored = localStorage.getItem("interactions");
+    return stored ? JSON.parse(stored) : [];
+  },
+
+  async createInteraction(interForm) {
+    const payload = {
+      customerId: parseInt(interForm.customerId),
+      type: interForm.type,
+      content: interForm.content,
+      notes: interForm.notes,
+    };
+
+    const response = await fetch(
+      `${BASE_URL}/tuongtac`,
+      {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+
+    if (response.ok) {
+      const resJson = await response.json();
+
+      return {
+        id: resJson.id,
+        customerId: resJson.customerId,
+        customerName: resJson.customerName,
+        employeeId: resJson.employeeId,
+        employeeName: resJson.employeeName,
+        type: resJson.type,
+        content: resJson.content,
+        notes: resJson.notes,
+        date: resJson.date
+          ? resJson.date.substring(0, 10)
+          : "",
+        attachments: [],
+      };
+    }
+
+    throw new Error("Lỗi thêm mới tương tác.");
+  },
+
+  async updateInteraction(id, interForm) {
+    const payload = {
+      customerId: parseInt(interForm.customerId),
+      type: interForm.type,
+      content: interForm.content,
+      notes: interForm.notes,
+    };
+
+    const response = await fetch(
+      `${BASE_URL}/tuongtac/${id}`,
+      {
+        method: "PUT",
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+
+    if (response.ok) {
+      const resJson = await response.json();
+
+      return {
+        id: resJson.id,
+        customerId: resJson.customerId,
+        customerName: resJson.customerName,
+        employeeId: resJson.employeeId,
+        employeeName: resJson.employeeName,
+        type: resJson.type,
+        content: resJson.content,
+        notes: resJson.notes,
+        date: resJson.date
+          ? resJson.date.substring(0, 10)
+          : "",
+        attachments: (resJson.attachments || []).map(
+          (att) => ({
+            id: att.id,
+            fileName: att.fileName,
+            fileType: att.fileType,
+            fileSize: att.fileSize,
+            downloadUrl: `${BASE_URL}/tuongtac/files/${att.id}`,
+          })
+        ),
+      };
+    }
+
+    throw new Error("Lỗi cập nhật tương tác.");
+  },
+
+  async deleteInteraction(id) {
+    const response = await fetch(
+      `${BASE_URL}/tuongtac/${id}`,
+      {
+        method: "DELETE",
+        headers: getHeaders(),
+      }
+    );
+
+    return response.ok;
+  },
+
+  async uploadAttachment(interId, file) {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(
+      `${BASE_URL}/tuongtac/${interId}/files`,
+      {
+        method: "POST",
+        headers: getUploadHeaders(),
+        body: formData,
+      }
+    );
+
+    if (response.ok) {
+      return await response.json();
+    }
+
+    throw new Error("Lỗi tải lên tệp đính kèm.");
+  },
+
+  async deleteAttachment(interId, fileId) {
+    const response = await fetch(
+      `${BASE_URL}/tuongtac/${interId}/files/${fileId}`,
+      {
+        method: "DELETE",
+        headers: getHeaders(),
+      }
+    );
+
+    return response.ok;
+  },
+
+  // ======================
+  // SYSTEM CONFIG & BACKUP
+  // ======================
+
+  async getConfig() {
+    try {
+      const response = await fetch(
+        `${BASE_URL}/cauhinh`,
+        {
+          headers: getHeaders(),
+        }
+      );
+
+      if (response.ok) {
+        return await response.json();
+      }
+    } catch (e) {
+      console.error("Error fetching config", e);
+    }
+
+    const stored = localStorage.getItem("system_config");
+    return stored
+      ? JSON.parse(stored)
+      : { companyName: "CRM Nhóm 8" };
+  },
+
+  async updateConfig(body) {
+    const response = await fetch(
+      `${BASE_URL}/cauhinh`,
+      {
+        method: "PUT",
+        headers: getHeaders(),
+        body: JSON.stringify(body),
+      }
+    );
+
+    if (response.ok) {
+      return await response.json();
+    }
+
+    throw new Error("Lỗi cập nhật cấu hình.");
+  },
+
+  async downloadBackup() {
+    const response = await fetch(
+      `${BASE_URL}/cauhinh/backup`,
+      {
+        headers: getHeaders(),
+      }
+    );
+
+    if (response.ok) {
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `backup_crm_${new Date()
+        .toISOString()
+        .substring(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      return true;
+    }
+
+    throw new Error("Lỗi tải tệp sao lưu.");
+  },
+
+  async restoreBackup(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(
+      `${BASE_URL}/cauhinh/restore`,
+      {
+        method: "POST",
+        headers: getUploadHeaders(),
+        body: formData,
+      }
+    );
+
+    if (response.ok) {
+      return true;
+    }
+
+    throw new Error("Lỗi khôi phục cơ sở dữ liệu.");
+  },
+
+  // ======================
+  // TEMPLATES & MARKETING
+  // ======================
+
+  async getTemplates() {
+    try {
+      const response = await fetch(
+        `${BASE_URL}/thong-diep/mau`,
+        {
+          headers: getHeaders(),
+        }
+      );
+
+      if (response.ok) {
+        const resJson = await response.json();
+
+        return (resJson.data || []).map((t) => ({
+          id: t.maMau,
+          name: t.tieuDe,
+          content: t.noiDung,
+          type: t.loaiThongDiep
+            ? t.loaiThongDiep.toLowerCase()
+            : "email",
+          useCount: t.luotSuDung || 0,
+        }));
+      }
+    } catch (e) {
+      console.error("Error fetching templates", e);
+    }
+
+    const stored = localStorage.getItem("message_templates");
+    return stored ? JSON.parse(stored) : [];
+  },
+
+  async createTemplate(templateForm) {
+    const response = await fetch(`${BASE_URL}/thong-diep/mau`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(templateForm)
+    });
+    if (response.ok) {
+      const resJson = await response.json();
+      const t = resJson.data;
+      return {
+        id: t.maMau,
+        name: t.tieuDe,
+        content: t.noiDung,
+        type: t.loaiThongDiep ? t.loaiThongDiep.toLowerCase() : 'email',
+        useCount: t.luotSuDung || 0
+      };
+    }
+    throw new Error("Lỗi thêm mới mẫu thông điệp.");
+  },
+
+  async updateTemplate(id, templateForm) {
+    const response = await fetch(`${BASE_URL}/thong-diep/mau/${id}`, {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify(templateForm)
+    });
+    if (response.ok) {
+      const resJson = await response.json();
+      const t = resJson.data;
+      return {
+        id: t.maMau,
+        name: t.tieuDe,
+        content: t.noiDung,
+        type: t.loaiThongDiep ? t.loaiThongDiep.toLowerCase() : 'email',
+        useCount: t.luotSuDung || 0
+      };
+    }
+    throw new Error("Lỗi cập nhật mẫu thông điệp.");
+  },
+
+  async deleteTemplate(id) {
+    const response = await fetch(`${BASE_URL}/thong-diep/mau/${id}`, {
+      method: "DELETE",
+      headers: getHeaders()
+    });
+    return response.ok;
+  },
+
+  async getMessageHistory() {
+    try {
+      const response = await fetch(
+        `${BASE_URL}/thong-diep/lich-su`,
+        {
+          headers: getHeaders(),
+        }
+      );
+
+      if (response.ok) {
+        const resJson = await response.json();
+
+        return (resJson.data || []).map((h) => ({
+          id: h.maLichSuGui,
+          customerId: h.khachHang
+            ? h.khachHang.maKhachHang
+            : null,
+          customerName: h.khachHang
+            ? h.khachHang.hoTen
+            : "",
+          employeeId: h.nhanVien
+            ? h.nhanVien.maNhanVien
+            : null,
+          employeeName: h.nhanVien
+            ? h.nhanVien.hoTen
+            : "",
+          templateId: h.mauThongDiep
+            ? h.mauThongDiep.maMau
+            : null,
+          type: h.kenhGui
+            ? h.kenhGui.toLowerCase()
+            : "email",
+          channel: h.kenhGui || "Email",
+          promoTitle: h.tieuDe || "",
+          content: h.noiDung || "",
+          status:
+            h.trangThaiGui === "Đã gửi"
+              ? "sent"
+              : h.trangThaiGui === "Chờ gửi"
+              ? "pending"
+              : "failed",
+          errorMessage: h.lyDoThatBai || "",
+          sentTime: h.thoiGianGui
+            ? h.thoiGianGui
+                .substring(0, 16)
+                .replace("T", " ")
+            : "",
+        }));
+      }
+    } catch (e) {
+      console.error("Error fetching message history", e);
+    }
+
+    const stored = localStorage.getItem("message_history");
+    return stored ? JSON.parse(stored) : [];
+  },
+
+  async sendMessage(payload) {
+    const type =
+      payload.type === "sms"
+        ? "SMS"
+        : payload.type === "zalo"
+        ? "Zalo"
+        : "Email";
+
+    const response = await fetch(
+      `${BASE_URL}/thong-diep/gui`,
+      {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({
+          ...payload,
+          type: type,
+        }),
+      }
+    );
+
+    if (response.ok) {
+      const resJson = await response.json();
+      return resJson.data;
+    }
+
+    throw new Error("Lỗi gửi thông điệp.");
+  },
+
+  // ======================
+  // ADMIN USER MANAGEMENT
+  // ======================
+
+  async getAllUsers() {
+    const response = await fetch(
+      `${BASE_URL}/admin/users`,
+      {
+        headers: getHeaders(),
+      }
+    );
+
+    if (response.ok) {
+      const resJson = await response.json();
+      return resJson.data || [];
+    }
+
+    throw new Error("Không thể lấy danh sách tài khoản.");
   },
 };
