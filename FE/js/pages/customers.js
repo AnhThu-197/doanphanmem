@@ -16,7 +16,11 @@ function mapBackendCustomerToFrontend(c) {
         createdDate: c.ngayTao ? c.ngayTao.split('T')[0] : '',
         trialStartDate: c.ngayBatDauDungThu || null,
         trialDays: c.soNgayDungThu || 0,
-        deleted: false
+        deleted: false,
+        assignedTo: c.maNguoiPhuTrach || null,
+        assignedToName: c.tenNguoiPhuTrach || '',
+        maNguoiPhuTrach: c.maNguoiPhuTrach || null,
+        tenNguoiPhuTrach: c.tenNguoiPhuTrach || ''
     };
 }
 
@@ -86,17 +90,17 @@ async function loadCustomers() {
         }
     }
 
-    const canDelete = user && user.role !== 'employee';
-    const isManagerOrAdmin = user && (user.role === 'manager' || user.role === 'admin');
-
     const roleRaw = removeVietnameseAccentForMap(
         user?.role || user?.vaiTro || user?.chucVu || ''
     );
 
-    const isManagerOrAdmin =
+    const isManagerOrAdmin = user && (
+        user.role === 'manager' || 
+        user.role === 'admin' ||
         roleRaw.includes('admin') ||
         roleRaw.includes('manager') ||
-        roleRaw.includes('truong phong');
+        roleRaw.includes('truong phong')
+    );
 
     const canDelete = isManagerOrAdmin;
 
@@ -433,7 +437,6 @@ async function saveCustomer(e) {
             parseInt(document.getElementById('customerTrialDays').value) || 0
     };
 
-<<<<<<< HEAD
     console.log('Payload gửi lên backend:', payload);
 
     try {
@@ -452,50 +455,9 @@ async function saveCustomer(e) {
     } catch (error) {
         console.error('Lỗi lưu khách hàng:', error);
         alert('Lưu khách hàng thất bại. Kiểm tra F12 → Network → POST/PUT /khach-hang.');
-=======
-    const isApiSession = currentUser?.authSource === 'api';
-
-    if (isApiSession) {
-        const payloadBackend = {
-            hoTen: data.name,
-            email: data.email,
-            soDienThoai: data.phone,
-            congTy: data.company,
-            trangThaiKhach: mapFrontendCustomerStatusToBackend(data.status),
-            ngayBatDauDungThu: data.trialStartDate,
-            soNgayDungThu: data.trialDays,
-            maNguoiPhuTrach: data.assignedTo
-        };
-        try {
-            if (customerId) {
-                await API_SERVICES.khachHang.update(parseInt(customerId), payloadBackend);
-                alert('✓ Cập nhật khách hàng thành công (API)!');
-                DATA.addAuditLog?.('UPDATE_CUSTOMER', `Cập nhật (API): ${data.name}`, currentUser.id);
-            } else {
-                await API_SERVICES.khachHang.create(payloadBackend);
-                alert('✓ Thêm khách hàng thành công (API)!');
-                DATA.addAuditLog?.('ADD_CUSTOMER', `Thêm (API): ${data.name}`, currentUser.id);
-            }
-        } catch (error) {
-            console.error('Lỗi khi lưu khách hàng:', error);
-            alert('Không thể lưu khách hàng: ' + (error.message || 'Lỗi không xác định'));
-            return;
-        }
-    } else {
-        if (customerId) {
-            const c = DATA.customers.find(c => c.id === parseInt(customerId));
-            if (c) { Object.assign(c, data); alert('✓ Cập nhật khách hàng thành công!'); DATA.addAuditLog('UPDATE_CUSTOMER', `Cập nhật: ${data.name}`, currentUser.id); }
-        } else {
-            const newId = Math.max(...DATA.customers.map(c => c.id), 0) + 1;
-            DATA.customers.push({ id: newId, ...data, score: 0, createdDate: now, lastInteraction: '', deleted: false });
-            alert('✓ Thêm khách hàng thành công!');
-            DATA.addAuditLog('ADD_CUSTOMER', `Thêm: ${data.name}`, currentUser.id);
-        }
->>>>>>> feature/minh-chien
     }
 }
 
-<<<<<<< HEAD
 // Chuyển trạng thái trên giao diện sang trạng thái trong database/backend
 function mapUIStatusToBackend(status) {
     const value = removeVietnameseAccentForMap(status);
@@ -626,29 +588,7 @@ async function deleteCustomer(id) {
     } catch (error) {
         console.error('Lỗi xóa khách hàng:', error);
         alert('Xóa khách hàng thất bại. Kiểm tra F12 → Network → DELETE /khach-hang/{id}.');
-=======
-async function deleteCustomer(id) {
-    if (!confirm('Bạn có chắc muốn xóa khách hàng này?')) return;
-
-    const currentUser = AUTH.getCurrentUser();
-    const isApiSession = currentUser?.authSource === 'api';
-
-    if (isApiSession) {
-        try {
-            await API_SERVICES.khachHang.delete(parseInt(id), 'Xóa từ giao diện quản lý');
-            alert('✓ Đã xóa khách hàng thành công!');
-            DATA.addAuditLog?.('DELETE_CUSTOMER', `Xóa (API): ID ${id}`, currentUser.id);
-        } catch (error) {
-            console.error('Lỗi khi xóa khách hàng:', error);
-            alert('Không thể xóa khách hàng: ' + (error.message || 'Lỗi không xác định'));
-            return;
-        }
-    } else {
-        const c = DATA.customers.find(c => c.id === id);
-        if (c) { c.deleted = true; c.deletedDate = new Date().toLocaleDateString('vi-VN'); }
->>>>>>> feature/minh-chien
     }
-    loadCustomers();
 }
 
 function requestDeleteCustomer(customerId) {

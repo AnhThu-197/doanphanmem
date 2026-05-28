@@ -501,36 +501,31 @@
             }
         }
         
-        // Bước 1: Gửi email
+        // Bước 1: Gửi email (Mock OTP hiển thị trực tiếp cho user)
         document.getElementById('step1Form').addEventListener('submit', function(e) {
             e.preventDefault();
-            const email = document.getElementById('resetEmail').value;
+            const email = document.getElementById('resetEmail').value.trim();
             
-            // Giả lập gửi OTP
-            const otpCode = Math.floor(100000 + Math.random() * 900000); // Tạo mã OTP 6 số
-            console.log('OTP Code:', otpCode); // Trong thực tế sẽ gửi qua email
-            
-            // Lưu OTP vào sessionStorage để kiểm tra (demo)
+            // Giả lập gửi OTP 6 số
+            const otpCode = Math.floor(100000 + Math.random() * 900000);
             sessionStorage.setItem('resetOTP', otpCode);
             sessionStorage.setItem('resetEmail', email);
             
-            // Chuyển sang bước 2
             document.getElementById('step1Form').style.display = 'none';
             document.getElementById('step2Form').style.display = 'block';
             document.getElementById('displayEmail').textContent = email;
             updateProgress(2);
             
-            alert('✓ Mã OTP đã được gửi đến email: ' + email + '\n\n(Demo: Mã OTP là ' + otpCode + ')');
+            alert('✓ Yêu cầu cấp mã OTP thành công!\n\n(Demo: Mã OTP gửi đến email ' + email + ' là: ' + otpCode + ')');
         });
         
-        // Bước 2: Xác thực OTP
+        // Bước 2: Xác thực OTP (Mock đối chiếu tại client)
         document.getElementById('step2Form').addEventListener('submit', function(e) {
             e.preventDefault();
-            const enteredOTP = document.getElementById('otpCode').value;
+            const enteredOTP = document.getElementById('otpCode').value.trim();
             const correctOTP = sessionStorage.getItem('resetOTP');
             
             if (enteredOTP === correctOTP) {
-                // OTP đúng, chuyển sang bước 3
                 document.getElementById('step2Form').style.display = 'none';
                 document.getElementById('step3Form').style.display = 'block';
                 updateProgress(3);
@@ -539,8 +534,8 @@
             }
         });
         
-        // Bước 3: Đặt mật khẩu mới
-        document.getElementById('step3Form').addEventListener('submit', function(e) {
+        // Bước 3: Đặt mật khẩu mới (Gọi API lưu mật khẩu mới)
+        document.getElementById('step3Form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const newPassword = document.getElementById('newPassword').value;
             const confirmPassword = document.getElementById('confirmNewPassword').value;
@@ -555,16 +550,27 @@
                 return;
             }
             
-            // Giả lập cập nhật mật khẩu
             const email = sessionStorage.getItem('resetEmail');
-            alert('✓ Đặt mật khẩu mới thành công!\n\nEmail: ' + email + '\nBạn có thể đăng nhập với mật khẩu mới.');
+            const btn = e.target.querySelector('button[type="submit"]');
+            const origText = btn.innerHTML;
             
-            // Xóa session
-            sessionStorage.removeItem('resetOTP');
-            sessionStorage.removeItem('resetEmail');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang lưu mật khẩu...';
             
-            // Đóng modal
-            closeForgotPasswordModal();
+            try {
+                // Gọi API reset trực tiếp để cập nhật mật khẩu mới vào cơ sở dữ liệu
+                await API_SERVICES.auth.resetPasswordDirect(email, newPassword);
+                alert('✓ Đặt mật khẩu mới thành công!\nBạn có thể đăng nhập bằng mật khẩu mới này.');
+                
+                sessionStorage.removeItem('resetOTP');
+                sessionStorage.removeItem('resetEmail');
+                closeForgotPasswordModal();
+            } catch (err) {
+                alert('❌ Lỗi lưu mật khẩu mới: ' + (err.message || 'Không thể kết nối đến hệ thống'));
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = origText;
+            }
         });
         
         function backToStep1() {
@@ -575,10 +581,10 @@
         
         function resendOTP() {
             const email = sessionStorage.getItem('resetEmail');
+            if (!email) return;
             const otpCode = Math.floor(100000 + Math.random() * 900000);
             sessionStorage.setItem('resetOTP', otpCode);
-            console.log('New OTP Code:', otpCode);
-            alert('✓ Đã gửi lại mã OTP mới đến email: ' + email + '\n\n(Demo: Mã OTP mới là ' + otpCode + ')');
+            alert('✓ Đã gửi lại mã OTP mới.\n\n(Demo: Mã OTP mới là: ' + otpCode + ')');
         }
         
         // Đóng modal khi click bên ngoài

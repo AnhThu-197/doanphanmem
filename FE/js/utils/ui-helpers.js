@@ -33,18 +33,76 @@ function populateCustomerDropdown(selectId) {
     });
 }
 
-// Populate dropdown nhân viên
-function loadEmployeeDropdown(selectId, includeEmpty = true) {
+// Populate dropdown nhân viên (hỗ trợ API session và giữ value được chọn)
+function loadEmployeeDropdown(selectId, includeEmpty = true, selectedValue = null) {
     const select = document.getElementById(selectId);
     if (!select) return;
 
-    let html = includeEmpty ? '<option value="">-- Chọn nhân viên --</option>' : '';
-    if (typeof AUTH !== 'undefined' && AUTH.users) {
-        AUTH.users.forEach(user => {
-            html += `<option value="${user.id}">${user.name} (${user.position || user.role})</option>`;
-        });
+    const isApiSession = typeof AUTH !== 'undefined' && AUTH.getCurrentUser()?.authSource === 'api';
+
+    if (isApiSession) {
+        if (typeof DATA === 'undefined') window.DATA = {};
+        
+        const renderDropdownOptions = (employees) => {
+            let html = includeEmpty ? '<option value="">-- Chọn nhân viên --</option>' : '';
+            employees.forEach(emp => {
+                const isSelected = selectedValue !== null && Number(emp.id) === Number(selectedValue) ? 'selected' : '';
+                html += `<option value="${emp.id}" ${isSelected}>${emp.name} (${emp.position})</option>`;
+            });
+            select.innerHTML = html;
+            if (selectedValue !== null) {
+                select.value = selectedValue;
+            }
+        };
+
+        if (DATA.backendEmployees && DATA.backendEmployees.length > 0) {
+            renderDropdownOptions(DATA.backendEmployees);
+        } else {
+            select.innerHTML = includeEmpty ? '<option value="">-- Đang tải nhân viên... --</option>' : '<option value="">Đang tải...</option>';
+            
+            if (!DATA.backendEmployeesPromise) {
+                DATA.backendEmployeesPromise = API_SERVICES.nhanVien.list()
+                    .then(response => {
+                        const apiData = Array.isArray(response?.data)
+                            ? response.data
+                            : Array.isArray(response)
+                                ? response
+                                : Array.isArray(response?.data?.content)
+                                    ? response.data.content
+                                    : [];
+                        DATA.backendEmployees = apiData.map(nv => ({
+                            id: nv.maNhanVien,
+                            name: nv.hoTen || nv.email || '',
+                            position: nv.chucVu || 'Nhân viên'
+                        }));
+                        return DATA.backendEmployees;
+                    });
+            }
+
+            DATA.backendEmployeesPromise
+                .then(employees => {
+                    renderDropdownOptions(employees);
+                })
+                .catch(error => {
+                    console.error('Lỗi tải nhân viên cho dropdown:', error);
+                    select.innerHTML = includeEmpty ? '<option value="">-- Lỗi tải nhân viên --</option>' : '<option value="">Lỗi tải</option>';
+                    DATA.backendEmployeesPromise = null;
+                });
+        }
+    } else {
+        // Chế độ mock
+        let html = includeEmpty ? '<option value="">-- Chọn nhân viên --</option>' : '';
+        if (typeof AUTH !== 'undefined' && AUTH.users) {
+            AUTH.users.forEach(user => {
+                const isSelected = selectedValue !== null && Number(user.id) === Number(selectedValue) ? 'selected' : '';
+                html += `<option value="${user.id}" ${isSelected}>${user.name} (${user.position || user.role})</option>`;
+            });
+        }
+        select.innerHTML = html;
+        if (selectedValue !== null) {
+            select.value = selectedValue;
+        }
     }
-    select.innerHTML = html;
 }
 
 // Populate dropdown mẫu thông điệp

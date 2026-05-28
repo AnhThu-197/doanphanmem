@@ -17,6 +17,11 @@ const API_SERVICES = {
         otp,
         matKhauMoi,
       }),
+    resetPasswordDirect: (email, matKhauMoi) =>
+      API_CLIENT.post(API_ENDPOINTS.auth.resetPasswordDirect, {
+        email,
+        matKhauMoi,
+      }),
   },
 
   profile: {
@@ -48,6 +53,8 @@ const API_SERVICES = {
       API_CLIENT.get(API_ENDPOINTS.khachHang.assignmentHistory),
     trash: () => API_CLIENT.get(API_ENDPOINTS.khachHang.trash),
     restore: (id) => API_CLIENT.post(API_ENDPOINTS.khachHang.restore(id)),
+    deletePermanently: (id) =>
+      API_CLIENT.delete(API_ENDPOINTS.khachHang.deletePermanently(id)),
   },
 
   chienDich: {
@@ -124,5 +131,13 @@ const API_SERVICES = {
     syncNow: (payload) =>
       API_CLIENT.post(API_ENDPOINTS.dongBoAPI.syncNow, payload),
     history: () => API_CLIENT.get(API_ENDPOINTS.dongBoAPI.history),
+  },
+
+  tuongTac: {
+    list: () => API_CLIENT.get(API_ENDPOINTS.tuongTac.list),
+    listByCustomer: (customerId) => API_CLIENT.get(API_ENDPOINTS.tuongTac.listByCustomer(customerId)),
+    create: (payload) => API_CLIENT.post(API_ENDPOINTS.tuongTac.create, payload),
+    update: (id, payload) => API_CLIENT.put(API_ENDPOINTS.tuongTac.update(id), payload),
+    delete: (id) => API_CLIENT.delete(API_ENDPOINTS.tuongTac.delete(id)),
   },
 };

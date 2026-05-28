@@ -90,7 +90,7 @@ async function loadProfile() {
                             </div>
                             <div class="form-group">
                                 <label for="profilePageEmail">Email *</label>
-                                <input type="email" id="profilePageEmail" value="${esc(user.email)}" required placeholder="email@example.com">
+                                <input type="email" id="profilePageEmail" value="${esc(user.email)}" readonly disabled style="background: #e2e8f0; cursor: not-allowed;">
                             </div>
                             <div class="form-group">
                                 <label for="profilePagePhone">Số điện thoại</label>
@@ -240,6 +240,8 @@ async function changePassword(e) {
         try {
             await API_SERVICES.auth.changePassword(oldPassword, newPassword, confirmPassword);
             alert('✓ Đổi mật khẩu thành công!');
+            const form = document.getElementById('passwordForm');
+            if (form) form.reset();
             closeModal('passwordModal');
         } catch (err) {
             alert('✗ ' + err.message);
@@ -253,7 +255,11 @@ async function changePassword(e) {
     // Fallback mock
     const result = AUTH.changePassword(oldPassword, newPassword);
     alert(result.message);
-    if (result.success) closeModal('passwordModal');
+    if (result.success) {
+        const form = document.getElementById('passwordForm');
+        if (form) form.reset();
+        closeModal('passwordModal');
+    }
 }
 
 function openProfileModal() {

@@ -79,6 +79,9 @@ function setupModalForms() {
     if (interactionForm) interactionForm.onsubmit = saveInteraction;
     if (templateForm)    templateForm.onsubmit = saveTemplate;
     if (sendMessageForm) sendMessageForm.onsubmit = sendMessage;
+    
+    const passwordForm    = document.getElementById('passwordForm');
+    if (passwordForm)    passwordForm.onsubmit = changePassword;
 
     setTimeout(() => {
         const searchInput = document.getElementById('searchCustomerInput');

@@ -56,4 +56,12 @@ public class AuthController {
         authService.datLaiMatKhau(body.get("email"), body.get("otp"), body.get("matKhauMoi"));
         return ResponseEntity.ok(ApiResponse.ok("Đặt lại mật khẩu thành công", null));
     }
+
+    @PostMapping("/dat-lai-mat-khau-truc-tiep")
+    @Operation(summary = "Đặt lại mật khẩu trực tiếp không cần OTP (cho mock/demo)")
+    public ResponseEntity<ApiResponse<Void>> datLaiMatKhauTrucTiep(
+            @RequestBody Map<String, String> body) {
+        authService.datLaiMatKhauTrucTiep(body.get("email"), body.get("matKhauMoi"));
+        return ResponseEntity.ok(ApiResponse.ok("Đặt lại mật khẩu thành công", null));
+    }
 }

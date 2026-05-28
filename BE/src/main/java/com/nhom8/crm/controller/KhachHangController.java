@@ -139,7 +139,7 @@ public class KhachHangController {
 
     @DeleteMapping("/{id}/permanent")
     @Operation(summary = "Xóa vĩnh viễn khách hàng")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<ApiResponse<Void>> deletePermanent(
             @PathVariable Integer id) {
 

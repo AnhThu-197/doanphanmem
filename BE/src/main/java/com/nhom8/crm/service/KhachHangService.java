@@ -162,6 +162,18 @@ public class KhachHangService {
         KhachHang kh = khachHangRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Khách hàng", id));
 
+        // Clean up child tables without ON DELETE CASCADE
+        entityManager.createNativeQuery("DELETE FROM KhachHang_ChienDich WHERE maKhachHang = :id")
+                .setParameter("id", id).executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM NhacNho WHERE maKhachHang = :id")
+                .setParameter("id", id).executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM HopDong_GiaoDich WHERE maKhachHang = :id")
+                .setParameter("id", id).executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM LichSuThucThiQuyTac WHERE maKhachHang = :id")
+                .setParameter("id", id).executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM LichSuPhanBoKhachHang WHERE maKhachHang = :id")
+                .setParameter("id", id).executeUpdate();
+
         khachHangRepository.delete(kh);
     }
 

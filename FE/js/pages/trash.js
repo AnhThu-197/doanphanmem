@@ -234,12 +234,18 @@ async function restoreCampaign(campaignId) {
 
 async function permanentDeleteCustomer(customerId) {
     const customer = DATA.customers.find(item => Number(item.id) === Number(customerId));
-    if (!customer || !confirm(`Xóa vĩnh viễn khách hàng "${customer.name}"?`)) return;
+    if (!customer || !confirm(`Xóa vĩnh viễn khách hàng "${customer.name}"?\nHành động này không thể khôi phục!`)) return;
 
     const isApiSession = AUTH.getCurrentUser()?.authSource === 'api';
     if (isApiSession) {
-        alert('Chức năng xóa vĩnh viễn khách hàng trực tiếp qua CSDL chưa được hỗ trợ để đảm bảo an toàn ràng buộc dữ liệu.');
-        return;
+        try {
+            await API_SERVICES.khachHang.deletePermanently(customerId);
+            alert('✓ Xóa vĩnh viễn khách hàng thành công!');
+        } catch (error) {
+            console.error('Lỗi khi xóa vĩnh viễn khách hàng:', error);
+            alert('Không thể xóa vĩnh viễn khách hàng: ' + (error.message || 'Lỗi không xác định'));
+            return;
+        }
     } else {
         DATA.customers = DATA.customers.filter(item => Number(item.id) !== Number(customerId));
     }
@@ -274,12 +280,35 @@ async function emptyTrash(type) {
     if (type === 'customers') {
         const deletedCusts = DATA.customers.filter(item => item.deleted);
         if (!deletedCusts.length) return;
+        if (!confirm(`Xóa vĩnh viễn ${deletedCusts.length} khách hàng?\nHành động này không thể khôi phục!`)) return;
+        
         if (isApiSession) {
-            alert('Để đảm bảo an toàn dữ liệu khách hàng, vui lòng khôi phục hoặc thực hiện xóa từng khách hàng.');
-            return;
+            try {
+                // Show loading indicator
+                const content = document.getElementById('mainContent');
+                if (content) {
+                    content.innerHTML = `
+                        <div class="page-header">
+                            <div>
+                                <h1>Thùng rác</h1>
+                                <p>Khôi phục hoặc xóa vĩnh viễn dữ liệu đã xóa mềm.</p>
+                            </div>
+                        </div>
+                        <div style="text-align: center; padding: 40px;">
+                            <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: #ef4444; margin-bottom: 16px;"></i>
+                            <p style="color: #64748b;">Đang xóa vĩnh viễn tất cả khách hàng...</p>
+                        </div>
+                    `;
+                }
+                await Promise.all(deletedCusts.map(cust => API_SERVICES.khachHang.deletePermanently(cust.id)));
+                alert('✓ Đã xóa vĩnh viễn tất cả khách hàng thành công!');
+            } catch (error) {
+                console.error('Lỗi khi xóa vĩnh viễn tất cả khách hàng:', error);
+                alert('Lỗi khi xóa vĩnh viễn một số khách hàng: ' + (error.message || 'Lỗi không xác định'));
+            }
+        } else {
+            DATA.customers = DATA.customers.filter(item => !item.deleted);
         }
-        if (!confirm(`Xóa vĩnh viễn ${deletedCusts.length} khách hàng?`)) return;
-        DATA.customers = DATA.customers.filter(item => !item.deleted);
         DATA.addAuditLog?.('EMPTY_TRASH_CUSTOMERS', `Xóa vĩnh viễn ${deletedCusts.length} khách hàng`, AUTH.getCurrentUser()?.id);
     }
 

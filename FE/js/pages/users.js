@@ -158,8 +158,8 @@ function openUserModal(userId = null) {
             </div>
             <form id="userForm" onsubmit="saveUser(event, ${isEdit ? user.id : 'null'})">
                 <div class="form-group">
-                    <label>Tên đăng nhập *</label>
-                    <input id="userUsername" value="${user?.username || ''}" ${isEdit ? 'readonly' : ''} required>
+                    <label>Tên đăng nhập (Email) *</label>
+                    <input type="email" id="userUsername" value="${user?.username || ''}" ${isEdit ? 'readonly' : ''} required placeholder="Ví dụ: example@gmail.com">
                 </div>
                 <div class="form-group">
                     <label>Họ tên *</label>

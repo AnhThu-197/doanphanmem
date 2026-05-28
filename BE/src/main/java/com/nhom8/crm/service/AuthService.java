@@ -130,4 +130,14 @@ public class AuthService {
         taiKhoan.setThoiHanOTP(null);
         taiKhoanRepository.save(taiKhoan);
     }
+
+    @Transactional
+    public void datLaiMatKhauTrucTiep(String email, String matKhauMoi) {
+        TaiKhoan taiKhoan = taiKhoanRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Tài khoản không tồn tại"));
+        taiKhoan.setMatKhau(passwordEncoder.encode(matKhauMoi));
+        taiKhoan.setMaXacThucOTP(null);
+        taiKhoan.setThoiHanOTP(null);
+        taiKhoanRepository.save(taiKhoan);
+    }
 }

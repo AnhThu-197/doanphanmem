@@ -30,7 +30,8 @@ function mapBackendCampaignToFrontend(c) {
 
 function mapBackendStatusToFrontend(backendStatus) {
     if (!backendStatus) return 'planning';
-    switch (backendStatus) {
+    const status = backendStatus.toString().trim();
+    switch (status) {
         case 'Lên kế hoạch': return 'planning';
         case 'Đang chạy': return 'active';
         case 'Đã kết thúc': return 'completed';
@@ -40,7 +41,9 @@ function mapBackendStatusToFrontend(backendStatus) {
 }
 
 function mapFrontendStatusToBackend(frontendStatus) {
-    switch (frontendStatus) {
+    if (!frontendStatus) return 'Lên kế hoạch';
+    const status = frontendStatus.toString().trim();
+    switch (status) {
         case 'planning': return 'Lên kế hoạch';
         case 'active': return 'Đang chạy';
         case 'completed': return 'Đã kết thúc';
@@ -51,6 +54,11 @@ function mapFrontendStatusToBackend(frontendStatus) {
 
 function getCampaignManagerName(managerId) {
     if (!managerId) return 'Chưa phân công';
+    const isApiSession = typeof AUTH !== 'undefined' && AUTH.getCurrentUser()?.authSource === 'api';
+    if (isApiSession && DATA.backendEmployees) {
+        const manager = DATA.backendEmployees.find(emp => Number(emp.id) === Number(managerId));
+        if (manager) return manager.name;
+    }
     const manager = (AUTH.users || []).find(user => Number(user.id) === Number(managerId));
     return manager ? manager.name : 'Chưa phân công';
 }
@@ -287,7 +295,6 @@ function editCampaign(id) {
         campaignName: campaign.name,
         campaignDescription: campaign.description,
         campaignType: campaign.type,
-        campaignManager: campaign.managerId,
         campaignStartDate: campaign.startDate,
         campaignEndDate: campaign.endDate,
         campaignBudget: campaign.budget,
@@ -298,6 +305,9 @@ function editCampaign(id) {
         const field = document.getElementById(fieldId);
         if (field) field.value = value || '';
     });
+
+    // Tải dropdown nhân viên và chọn người quản lý hiện tại
+    loadEmployeeDropdown('campaignManager', true, campaign.managerId);
 }
 
 async function saveCampaign(e) {
@@ -307,12 +317,12 @@ async function saveCampaign(e) {
     const campaignId = modal ? modal.dataset.campaignId : null;
     const today = new Date().toISOString().split('T')[0];
     const payload = {
-        name: document.getElementById('campaignName')?.value.trim(),
-        description: document.getElementById('campaignDescription')?.value.trim(),
-        type: document.getElementById('campaignType')?.value,
+        name: document.getElementById('campaignName')?.value?.trim() || '',
+        description: document.getElementById('campaignDescription')?.value?.trim() || '',
+        type: document.getElementById('campaignType')?.value || '',
         managerId: Number(document.getElementById('campaignManager')?.value) || null,
-        startDate: document.getElementById('campaignStartDate')?.value,
-        endDate: document.getElementById('campaignEndDate')?.value,
+        startDate: document.getElementById('campaignStartDate')?.value || '',
+        endDate: document.getElementById('campaignEndDate')?.value || '',
         budget: Number(document.getElementById('campaignBudget')?.value || 0),
         status: document.getElementById('campaignStatus')?.value || 'planning',
         updatedDate: today

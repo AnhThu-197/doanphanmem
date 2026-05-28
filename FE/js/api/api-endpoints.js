@@ -5,6 +5,7 @@ const API_ENDPOINTS = {
     changePassword: "/auth/doi-mat-khau",
     forgotPassword: "/auth/quen-mat-khau",
     resetPassword: "/auth/dat-lai-mat-khau",
+    resetPasswordDirect: "/auth/dat-lai-mat-khau-truc-tiep",
   },
 
   profile: {
@@ -28,6 +29,7 @@ const API_ENDPOINTS = {
     assignmentHistory: "/khach-hang/lich-su-phan-bo",
     trash: "/khach-hang/thung-rac",
     restore: (id) => `/khach-hang/${id}/khoi-phuc`,
+    deletePermanently: (id) => `/khach-hang/${id}/permanent`,
   },
 
   chienDich: {
@@ -93,6 +95,14 @@ const API_ENDPOINTS = {
     testConnection: "/dong-bo-api/test-ket-noi",
     syncNow: "/dong-bo-api/dong-bo",
     history: "/dong-bo-api/lich-su",
+  },
+
+  tuongTac: {
+    list: "/tuongtac",
+    listByCustomer: (customerId) => `/tuongtac/khachhang/${customerId}`,
+    create: "/tuongtac",
+    update: (id) => `/tuongtac/${id}`,
+    delete: (id) => `/tuongtac/${id}`,
   },
 
   docs: {
