@@ -3,15 +3,9 @@ package com.nhom8.crm.service.impl;
 import com.nhom8.crm.dto.request.AppointmentRequest;
 import com.nhom8.crm.dto.request.AppointmentResultRequest;
 import com.nhom8.crm.dto.response.AppointmentResponse;
-import com.nhom8.crm.entity.KhachHang;
-import com.nhom8.crm.entity.LichSuTuongTac;
-import com.nhom8.crm.entity.NhacNho;
-import com.nhom8.crm.entity.NhanVien;
+import com.nhom8.crm.entity.*;
 import com.nhom8.crm.exception.ResourceNotFoundException;
-import com.nhom8.crm.repository.KhachHangRepository;
-import com.nhom8.crm.repository.LichSuTuongTacRepository;
-import com.nhom8.crm.repository.NhacNhoRepository;
-import com.nhom8.crm.repository.NhanVienRepository;
+import com.nhom8.crm.repository.*;
 import com.nhom8.crm.service.NhacNhoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,6 +25,7 @@ public class NhacNhoServiceImpl implements NhacNhoService {
     private final KhachHangRepository khachHangRepository;
     private final NhanVienRepository nhanVienRepository;
     private final LichSuTuongTacRepository interactionRepository;
+    private final ThongBaoRepository thongBaoRepository;
     private final org.springframework.mail.javamail.JavaMailSender mailSender;
 
     @Autowired
@@ -38,11 +33,13 @@ public class NhacNhoServiceImpl implements NhacNhoService {
                               KhachHangRepository khachHangRepository,
                               NhanVienRepository nhanVienRepository,
                               LichSuTuongTacRepository interactionRepository,
+                              ThongBaoRepository thongBaoRepository,
                               org.springframework.mail.javamail.JavaMailSender mailSender) {
         this.repository = repository;
         this.khachHangRepository = khachHangRepository;
         this.nhanVienRepository = nhanVienRepository;
         this.interactionRepository = interactionRepository;
+        this.thongBaoRepository = thongBaoRepository;
         this.mailSender = mailSender;
     }
 
@@ -147,6 +144,21 @@ public class NhacNhoServiceImpl implements NhacNhoService {
 
         if (saved == null) {
             throw new ResourceNotFoundException("Không tìm thấy lịch hẹn vừa tạo với mã: " + newId);
+        }
+
+        // Tự động tạo thông báo gửi tới nhân viên phụ trách lịch hẹn
+        try {
+            ThongBao tb = ThongBao.builder()
+                    .nhanVien(nhanVien)
+                    .tieuDe("Lịch hẹn mới")
+                    .noiDung("Bạn có lịch hẹn mới: " + saved.getTieuDe() + " với khách hàng " + khachHang.getHoTen())
+                    .loaiThongBao("Lịch hẹn")
+                    .daDoc(false)
+                    .duongDanLienKet("/smart-reminders")
+                    .build();
+            thongBaoRepository.save(tb);
+        } catch (Exception e) {
+            System.err.println("❌ Lỗi tự động tạo thông báo lịch hẹn: " + e.getMessage());
         }
 
         if (request.getStatus() != null || request.getResult() != null || request.getResultNotes() != null) {

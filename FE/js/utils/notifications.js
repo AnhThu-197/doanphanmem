@@ -2,10 +2,6 @@
 // NOTIFICATIONS - Thông báo hệ thống
 // ============================================
 
-// ============================================
-// NOTIFICATIONS - Thông báo hệ thống
-// ============================================
-
 function showNotifications() {
     openNotifications();
 }
@@ -51,33 +47,68 @@ function renderNotificationsList() {
 
     if (!DATA.notifications || DATA.notifications.length === 0) {
         notificationList.innerHTML = `
-            <div style="text-align: center; padding: 30px; color: #94a3b8;">
-                <i class="fas fa-bell-slash" style="font-size: 32px; margin-bottom: 10px; display: block;"></i>
-                Không có thông báo nào.
+            <div style="text-align: center; padding: 40px 20px; color: #94a3b8;">
+                <div style="font-size: 40px; margin-bottom: 15px; color: #cbd5e1;">
+                    <i class="fas fa-bell-slash"></i>
+                </div>
+                <p style="margin: 0; font-size: 14px;">Không có thông báo nào dành cho bạn.</p>
             </div>
         `;
         return;
     }
 
-    notificationList.innerHTML = DATA.notifications.map(n => `
-        <div style="padding: 15px; border-bottom: 1px solid #e2e8f0; cursor: pointer;
-                    background: ${n.read ? '#fff' : '#f0f9ff'};"
-             onclick="markAsRead(${n.id})">
-            <div style="display: flex; justify-content: space-between; align-items: start;">
-                <div>
-                    <h4 style="margin: 0 0 5px 0; color: #0f172a;">${n.title}</h4>
-                    <p style="margin: 0 0 5px 0; color: #334155; font-size: 14px;">${n.message}</p>
-                    <small style="color: #94a3b8;">${n.date}</small>
+    notificationList.innerHTML = DATA.notifications.map(n => {
+        let iconHtml = '<i class="fas fa-info-circle" style="color: #6366f1;"></i>';
+        const type = (n.type || '').toLowerCase();
+        const title = (n.title || '').toLowerCase();
+        
+        if (type === 'phân công' || type === 'phân bổ' || title.includes('khách hàng') || type === 'phân công' || type === 'phân bổ') {
+            iconHtml = '<i class="fas fa-user-tag" style="color: #0284c7;"></i>';
+        } else if (type === 'nhắc nhở' || title.includes('nhắc nhở')) {
+            iconHtml = '<i class="fas fa-clock" style="color: #f59e0b;"></i>';
+        } else if (type === 'lịch hẹn' || title.includes('lịch hẹn')) {
+            iconHtml = '<i class="fas fa-calendar-check" style="color: #10b981;"></i>';
+        }
+
+        const borderLeft = n.read ? 'none' : '4px solid #2B4856';
+        const paddingLeft = n.read ? '16px' : '12px';
+
+        return `
+            <div class="notification-item" style="padding: 16px; border-bottom: 1px solid #f1f5f9; cursor: pointer;
+                        background: ${n.read ? '#ffffff' : '#f8fafc'}; border-left: ${borderLeft}; padding-left: ${paddingLeft};
+                        transition: background-color 0.2s ease;"
+                 onclick="markAsRead(${n.id})"
+                 onmouseover="this.style.backgroundColor='#f1f5f9'"
+                 onmouseout="this.style.backgroundColor='${n.read ? '#ffffff' : '#f8fafc'}'">
+                <div style="display: flex; gap: 12px; align-items: flex-start;">
+                    <div style="font-size: 18px; padding-top: 2px;">
+                        ${iconHtml}
+                    </div>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; gap: 8px;">
+                            <h4 style="margin: 0; color: #1e293b; font-size: 14px; font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${n.title}</h4>
+                            ${!n.read ? '<span style="background: #2b4856; color: white; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 600; text-transform: uppercase;">Mới</span>' : ''}
+                        </div>
+                        <p style="margin: 0 0 6px 0; color: #475569; font-size: 13px; line-height: 1.5; word-wrap: break-word;">${n.message}</p>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <small style="color: #94a3b8; font-size: 11px;"><i class="far fa-clock" style="margin-right: 4px;"></i>${n.date}</small>
+                            <span style="font-size: 11px; color: #2B4856; font-weight: 500;">
+                                Chi tiết <i class="fas fa-chevron-right" style="font-size: 9px; margin-left: 2px;"></i>
+                            </span>
+                        </div>
+                    </div>
                 </div>
-                ${!n.read ? '<span style="background: #2B4856; color: white; padding: 2px 8px; border-radius: 50%; font-size: 12px;">Mới</span>' : ''}
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 async function markAsRead(notificationId) {
     const user = AUTH.getCurrentUser();
     
+    // Tìm thông tin thông báo trước để biết type / link
+    const notification = DATA.notifications.find(n => n.id === notificationId);
+
     // Gọi API cập nhật trạng thái nếu dùng API
     if (user && user.authSource === 'api') {
         try {
@@ -88,7 +119,6 @@ async function markAsRead(notificationId) {
     }
     
     // Cập nhật trạng thái local
-    const notification = DATA.notifications.find(n => n.id === notificationId);
     if (notification) {
         notification.read = true;
     }
@@ -96,6 +126,61 @@ async function markAsRead(notificationId) {
     // Render lại giao diện
     renderNotificationsList();
     await updateNotificationBadge();
+
+    // Điều hướng thông minh dựa vào loại thông báo
+    if (notification) {
+        // Tắt modal thông báo
+        closeModal('notificationModal');
+        document.body.classList.remove('modal-open');
+
+        const type = (notification.type || '').toLowerCase();
+        const link = (notification.link || '').toLowerCase();
+        const title = (notification.title || '').toLowerCase();
+
+        if (type === 'nhắc nhở' || type === 'lịch hẹn' || link.includes('nhac-nho') || title.includes('nhắc nhở') || title.includes('lịch hẹn')) {
+            if (typeof loadPage === 'function') {
+                const user = AUTH.getCurrentUser();
+                const allowedPages = {
+                    employee: ['dashboard', 'customers', 'campaigns', 'contracts', 'send-message', 'profile', 'trial-management', 'automation', 'smart-reminders', 'merge-duplicates'],
+                    manager:  ['dashboard', 'customers', 'campaigns', 'contracts', 'campaign-expenses', 'send-message', 'profile', 'reports', 'manage-employees', 'trash', 'trial-management', 'automation', 'smart-reminders', 'merge-duplicates', 'api-sync', 'financial-sync'],
+                    admin:    ['dashboard', 'user-management', 'settings', 'profile']
+                };
+                const userAllowed = allowedPages[user.role] || allowedPages.employee;
+                if (userAllowed.includes('smart-reminders')) {
+                    loadPage('smart-reminders');
+                    // highlight menu item
+                    document.querySelectorAll('.sidebar-menu li').forEach(item => {
+                        if (item.dataset.page === 'smart-reminders') {
+                            item.classList.add('active');
+                        } else {
+                            item.classList.remove('active');
+                        }
+                    });
+                }
+            }
+        } else if (type === 'phân công' || type === 'phân bổ' || link.includes('khach-hang') || title.includes('khách hàng')) {
+            if (typeof loadPage === 'function') {
+                const user = AUTH.getCurrentUser();
+                const allowedPages = {
+                    employee: ['dashboard', 'customers', 'campaigns', 'contracts', 'send-message', 'profile', 'trial-management', 'automation', 'smart-reminders', 'merge-duplicates'],
+                    manager:  ['dashboard', 'customers', 'campaigns', 'contracts', 'campaign-expenses', 'send-message', 'profile', 'reports', 'manage-employees', 'trash', 'trial-management', 'automation', 'smart-reminders', 'merge-duplicates', 'api-sync', 'financial-sync'],
+                    admin:    ['dashboard', 'user-management', 'settings', 'profile']
+                };
+                const userAllowed = allowedPages[user.role] || allowedPages.employee;
+                if (userAllowed.includes('customers')) {
+                    loadPage('customers');
+                    // highlight menu item
+                    document.querySelectorAll('.sidebar-menu li').forEach(item => {
+                        if (item.dataset.page === 'customers') {
+                            item.classList.add('active');
+                        } else {
+                            item.classList.remove('active');
+                        }
+                    });
+                }
+            }
+        }
+    }
 }
 
 async function markAllAsRead() {
@@ -144,4 +229,48 @@ async function updateNotificationBadge() {
         badge.style.display = unreadCount > 0 ? 'block' : 'none';
     }
 }
+
+// Tự động cập nhật thông báo mỗi 15 giây nếu người dùng đã đăng nhập
+document.addEventListener('DOMContentLoaded', () => {
+    // Đợi 2 giây sau khi tải trang để tránh quá tải lúc mới init, sau đó thực hiện poll
+    setTimeout(() => {
+        if (typeof AUTH !== 'undefined' && AUTH.isLoggedIn()) {
+            updateNotificationBadge();
+        }
+        
+        // Thiết lập interval mỗi 15 giây
+        setInterval(() => {
+            if (typeof AUTH !== 'undefined' && AUTH.isLoggedIn()) {
+                updateNotificationBadge();
+                // Nếu modal thông báo đang mở thì reload danh sách luôn
+                const modal = document.getElementById('notificationModal');
+                if (modal && modal.style.display === 'block') {
+                    // Gọi API không mở modal mới
+                    (async () => {
+                        const user = AUTH.getCurrentUser();
+                        if (user && user.authSource === 'api') {
+                            try {
+                                const res = await API_SERVICES.thongBao.list();
+                                const rawNotifications = res.data ?? res ?? [];
+                                DATA.notifications = rawNotifications.map(n => ({
+                                    id: n.maThongBao,
+                                    title: n.tieuDe || 'Thông báo hệ thống',
+                                    message: n.noiDung || '',
+                                    date: n.thoiGianTao ? new Date(n.thoiGianTao).toLocaleString('vi-VN') : '',
+                                    read: !!n.daDoc,
+                                    type: n.loaiThongBao || 'Hệ thống',
+                                    link: n.duongDanLienKet || ''
+                                }));
+                                renderNotificationsList();
+                            } catch (err) {
+                                console.error('Lỗi tự động tải thông báo:', err);
+                            }
+                        }
+                    })();
+                }
+            }
+        }, 15000);
+    }, 2000);
+});
+
 

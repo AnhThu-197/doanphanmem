@@ -24,6 +24,7 @@ public class KhachHangService {
     private final NganhNgheRepository nganhNgheRepository;
     private final NguonKhachHangRepository nguonKhachHangRepository;
     private final PhuongXaRepository phuongXaRepository;
+    private final ThongBaoRepository thongBaoRepository;
 
     @jakarta.persistence.PersistenceContext
     private jakarta.persistence.EntityManager entityManager;
