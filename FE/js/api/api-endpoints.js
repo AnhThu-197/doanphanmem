@@ -105,6 +105,18 @@ const API_ENDPOINTS = {
     delete: (id) => `/tuongtac/${id}`,
   },
 
+  automation: {
+    list: "/automation",
+    detail: (id) => `/automation/${id}`,
+    create: "/automation",
+    update: (id) => `/automation/${id}`,
+    delete: (id) => `/automation/${id}`,
+    activate: (id) => `/automation/${id}/activate`,
+    deactivate: (id) => `/automation/${id}/deactivate`,
+    statistics: "/automation/statistics",
+    executionHistory: (id) => `/automation/${id}/history`,
+  },
+
   docs: {
     openApiJson: "/v3/api-docs",
     swaggerUi: "/swagger-ui.html",

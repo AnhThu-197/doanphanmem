@@ -30,20 +30,32 @@ public class NhacNhoController {
     @GetMapping("/cua-toi")
     @Operation(summary = "Lấy nhắc nhở theo vai trò của người dùng hiện tại")
     public ResponseEntity<ApiResponse<List<NhacNho>>> getCuaToi(
+            @RequestParam(required = false) String trangThai,
             @AuthenticationPrincipal UserDetails userDetails) {
         var nhanVien = nhanVienRepository.findByTaiKhoan_Email(userDetails.getUsername())
                 .orElseThrow(() -> new ResourceNotFoundException("Nhân viên không tồn tại"));
         
         String role = nhanVien.getTaiKhoan().getVaiTro().getTenVaiTro().trim().toUpperCase();
+        
+        // Nếu không truyền trangThai, mặc định là "Chờ xử lý" (backward compatible)
+        String filterStatus = (trangThai != null && !trangThai.isEmpty()) ? trangThai : "Chờ xử lý";
+        
         if ("ADMIN".equals(role) || "MANAGER".equals(role)) {
-            // Admin and Manager can see all active pending reminders in the system
+            // Admin and Manager can see all reminders with specified status
+            if ("all".equalsIgnoreCase(filterStatus)) {
+                return ResponseEntity.ok(ApiResponse.ok(nhacNhoRepository.findAll()));
+            }
             return ResponseEntity.ok(ApiResponse.ok(
-                    nhacNhoRepository.findByTrangThaiNhacNho("Chờ xử lý")));
+                    nhacNhoRepository.findByTrangThaiNhacNho(filterStatus)));
         } else {
-            // Employee can only see active pending reminders assigned to them
+            // Employee can only see reminders assigned to them with specified status
+            if ("all".equalsIgnoreCase(filterStatus)) {
+                return ResponseEntity.ok(ApiResponse.ok(
+                        nhacNhoRepository.findByNhanVien_MaNhanVien(nhanVien.getMaNhanVien())));
+            }
             return ResponseEntity.ok(ApiResponse.ok(
                     nhacNhoRepository.findByNhanVien_MaNhanVienAndTrangThaiNhacNho(
-                            nhanVien.getMaNhanVien(), "Chờ xử lý")));
+                            nhanVien.getMaNhanVien(), filterStatus)));
         }
     }
 

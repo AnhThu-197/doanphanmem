@@ -314,8 +314,51 @@ const DATA = {
     ],
     
     automationWorkflows: [
-        { id: 1, name: 'Chăm sóc Lead mới', trigger: 'new_lead', status: 'active', actions: ['send_email', 'wait_3_days', 'condition_check'], createdDate: '2024-03-01' },
-        { id: 2, name: 'Theo dõi khách hàng không mở email', trigger: 'email_not_opened', status: 'active', actions: ['send_email_reminder'], createdDate: '2024-03-05' }
+        { 
+            id: 1, 
+            name: 'Chăm sóc Lead mới', 
+            description: 'Gửi email chào mừng và giới thiệu sản phẩm cho lead mới',
+            trigger: 'new_lead', 
+            status: 'active', 
+            actions: ['send_email', 'wait_3_days', 'condition_check'], 
+            createdDate: '2024-03-01' 
+        },
+        { 
+            id: 2, 
+            name: 'Theo dõi khách hàng không mở email', 
+            description: 'Gửi email nhắc nhở cho khách hàng chưa mở email sau 7 ngày',
+            trigger: 'email_not_opened', 
+            status: 'active', 
+            actions: ['send_email_reminder'], 
+            createdDate: '2024-03-05' 
+        },
+        { 
+            id: 3, 
+            name: 'Chúc mừng sinh nhật khách hàng', 
+            description: 'Gửi lời chúc sinh nhật và mã giảm giá đặc biệt',
+            trigger: 'customer_birthday', 
+            status: 'active', 
+            actions: ['send_email', 'send_sms'], 
+            createdDate: '2024-02-15' 
+        },
+        { 
+            id: 4, 
+            name: 'Nhắc nhở khách hàng không hoạt động', 
+            description: 'Gửi email cho khách hàng không tương tác trong 30 ngày',
+            trigger: 'no_interaction', 
+            status: 'paused', 
+            actions: ['send_email'], 
+            createdDate: '2024-01-20' 
+        },
+        { 
+            id: 5, 
+            name: 'Onboarding khách hàng mới', 
+            description: 'Chuỗi email hướng dẫn sử dụng sản phẩm cho khách hàng mới',
+            trigger: 'new_customer', 
+            status: 'draft', 
+            actions: ['send_email', 'wait_2_days', 'send_email', 'wait_5_days', 'send_email'], 
+            createdDate: '2024-03-10' 
+        }
     ],
     
     leadScoringRules: [

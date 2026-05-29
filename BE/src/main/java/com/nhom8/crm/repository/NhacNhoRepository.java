@@ -23,6 +23,8 @@ public interface NhacNhoRepository extends JpaRepository<NhacNho, Integer> {
             String trangThai
     );
 
+    List<NhacNho> findByNhanVien_MaNhanVien(Integer maNhanVien);
+
     List<NhacNho> findByTrangThaiNhacNho(String trangThai);
 
     @Query("""

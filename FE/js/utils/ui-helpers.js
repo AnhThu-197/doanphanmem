@@ -3,12 +3,25 @@
 // ============================================
 
 function switchTab(tabId) {
+    // Remove active from all tab contents and buttons
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
 
+    // Add active to selected tab content
     const selectedTab = document.getElementById(tabId);
-    if (selectedTab) selectedTab.classList.add('active');
-    if (event && event.target) event.target.classList.add('active');
+    if (selectedTab) {
+        selectedTab.classList.add('active');
+    }
+    
+    // Add active to the button that was clicked
+    // Find the button that has onclick with this tabId
+    const buttons = document.querySelectorAll('.tab-btn');
+    buttons.forEach(btn => {
+        const onclickAttr = btn.getAttribute('onclick');
+        if (onclickAttr && onclickAttr.includes(`'${tabId}'`)) {
+            btn.classList.add('active');
+        }
+    });
 }
 
 function closeModal(modalId) {

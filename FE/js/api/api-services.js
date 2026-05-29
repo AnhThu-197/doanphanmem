@@ -93,7 +93,12 @@ const API_SERVICES = {
   },
 
   nhacNho: {
-    cuaToi: () => API_CLIENT.get(API_ENDPOINTS.nhacNho.cuaToi),
+    cuaToi: (trangThai = null) => {
+      const url = trangThai 
+        ? `${API_ENDPOINTS.nhacNho.cuaToi}?trangThai=${encodeURIComponent(trangThai)}`
+        : API_ENDPOINTS.nhacNho.cuaToi;
+      return API_CLIENT.get(url);
+    },
     create: (payload) => API_CLIENT.post(API_ENDPOINTS.nhacNho.create, payload),
     complete: (id, payload) =>
       API_CLIENT.patch(API_ENDPOINTS.nhacNho.complete(id), payload || {}),
@@ -139,5 +144,17 @@ const API_SERVICES = {
     create: (payload) => API_CLIENT.post(API_ENDPOINTS.tuongTac.create, payload),
     update: (id, payload) => API_CLIENT.put(API_ENDPOINTS.tuongTac.update(id), payload),
     delete: (id) => API_CLIENT.delete(API_ENDPOINTS.tuongTac.delete(id)),
+  },
+
+  automation: {
+    getAll: () => API_CLIENT.get(API_ENDPOINTS.automation.list),
+    getById: (id) => API_CLIENT.get(API_ENDPOINTS.automation.detail(id)),
+    create: (payload) => API_CLIENT.post(API_ENDPOINTS.automation.create, payload),
+    update: (id, payload) => API_CLIENT.put(API_ENDPOINTS.automation.update(id), payload),
+    delete: (id) => API_CLIENT.delete(API_ENDPOINTS.automation.delete(id)),
+    activate: (id) => API_CLIENT.post(API_ENDPOINTS.automation.activate(id), {}),
+    deactivate: (id) => API_CLIENT.post(API_ENDPOINTS.automation.deactivate(id), {}),
+    getStatistics: () => API_CLIENT.get(API_ENDPOINTS.automation.statistics),
+    getExecutionHistory: (id) => API_CLIENT.get(API_ENDPOINTS.automation.executionHistory(id)),
   },
 };

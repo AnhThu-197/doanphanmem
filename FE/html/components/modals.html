@@ -682,3 +682,550 @@
     </form>
   </div>
 </div>
+
+<!-- Modal tạo/sửa kịch bản tự động hóa -->
+<div id="workflowModal" class="modal">
+  <div class="modal-content" style="max-width: 700px;">
+    <div class="modal-header">
+      <h2 id="workflowModalTitle">Tạo Kịch bản Tự động hóa</h2>
+      <button class="close-btn" onclick="closeModal('workflowModal')">
+        &times;
+      </button>
+    </div>
+    <form id="workflowForm" onsubmit="saveWorkflowFromModal(event)">
+      <div class="form-group">
+        <label for="workflowName">Tên kịch bản *</label>
+        <input
+          type="text"
+          id="workflowName"
+          required
+          placeholder="VD: Chăm sóc lead mới"
+        />
+      </div>
+      <div class="form-group">
+        <label for="workflowDescription">Mô tả</label>
+        <textarea
+          id="workflowDescription"
+          rows="2"
+          placeholder="Mô tả ngắn gọn về kịch bản..."
+        ></textarea>
+      </div>
+      <div class="modal-grid-2">
+        <div class="form-group">
+          <label for="workflowTrigger">Kích hoạt *</label>
+          <select id="workflowTrigger" required>
+            <option value="new_lead">Lead mới</option>
+            <option value="email_opened">Mở email</option>
+            <option value="form_submitted">Gửi form</option>
+            <option value="status_changed">Thay đổi trạng thái</option>
+            <option value="tag_added">Thêm tag</option>
+            <option value="manual">Thủ công</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="workflowStatus">Trạng thái *</label>
+          <select id="workflowStatus" required>
+            <option value="active">Hoạt động</option>
+            <option value="paused">Tạm dừng</option>
+            <option value="draft">Nháp</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Hành động tự động</label>
+        <div id="workflowActions" style="border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; background: #f8fafc;">
+          <div class="workflow-action-item" style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <select class="action-type" style="flex: 1; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px;">
+              <option value="send_email">Gửi email</option>
+              <option value="send_sms">Gửi SMS</option>
+              <option value="assign_to">Phân công cho</option>
+              <option value="add_tag">Thêm tag</option>
+              <option value="change_status">Đổi trạng thái</option>
+              <option value="create_task">Tạo task</option>
+              <option value="wait">Chờ (delay)</option>
+            </select>
+            <input type="text" class="action-value" placeholder="Giá trị" style="flex: 1; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px;" />
+            <button type="button" class="btn-delete" onclick="removeWorkflowAction(this)" style="padding: 6px 10px;">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="addWorkflowAction()" style="margin-top: 8px;">
+          <i class="fas fa-plus"></i> Thêm hành động
+        </button>
+      </div>
+      <div class="form-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          onclick="closeModal('workflowModal')"
+        >
+          Hủy
+        </button>
+        <button type="submit" class="btn btn-primary">Lưu</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal chi tiết kịch bản -->
+<div id="workflowDetailModal" class="modal">
+  <div class="modal-content" style="max-width: 700px;">
+    <div class="modal-header">
+      <h2>Chi tiết Kịch bản</h2>
+      <button class="close-btn" onclick="closeModal('workflowDetailModal')">
+        &times;
+      </button>
+    </div>
+    <div style="padding: 20px;">
+      <div class="form-group">
+        <label style="font-weight: 600; color: #64748b; font-size: 13px;">Tên kịch bản</label>
+        <div id="workflowDetailName" style="font-size: 16px; font-weight: 600; color: #1e293b; margin-top: 4px;"></div>
+      </div>
+      <div class="form-group" style="margin-top: 16px;">
+        <label style="font-weight: 600; color: #64748b; font-size: 13px;">Mô tả</label>
+        <div id="workflowDetailDescription" style="font-size: 15px; color: #1e293b; margin-top: 4px;"></div>
+      </div>
+      <div class="modal-grid-2" style="margin-top: 16px;">
+        <div class="form-group">
+          <label style="font-weight: 600; color: #64748b; font-size: 13px;">Kích hoạt</label>
+          <div id="workflowDetailTrigger" style="font-size: 15px; color: #1e293b; margin-top: 4px;"></div>
+        </div>
+        <div class="form-group">
+          <label style="font-weight: 600; color: #64748b; font-size: 13px;">Trạng thái</label>
+          <div id="workflowDetailStatus" style="font-size: 15px; margin-top: 4px;"></div>
+        </div>
+      </div>
+      <div class="form-group" style="margin-top: 16px;">
+        <label style="font-weight: 600; color: #64748b; font-size: 13px;">Hành động</label>
+        <div id="workflowDetailActions" style="margin-top: 8px;"></div>
+      </div>
+      <div class="form-group" style="margin-top: 16px;">
+        <label style="font-weight: 600; color: #64748b; font-size: 13px;">Ngày tạo</label>
+        <div id="workflowDetailCreatedDate" style="font-size: 15px; color: #1e293b; margin-top: 4px;"></div>
+      </div>
+    </div>
+    <div class="form-actions" style="padding: 15px 20px; border-top: 1px solid #e2e8f0;">
+      <button
+        type="button"
+        class="btn btn-secondary"
+        onclick="closeModal('workflowDetailModal')"
+      >
+        Đóng
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        id="workflowDetailEditBtn"
+        onclick="editWorkflowFromDetail()"
+      >
+        <i class="fas fa-edit"></i> Sửa
+      </button>
+      <button
+        type="button"
+        class="btn btn-danger"
+        id="workflowDetailDeleteBtn"
+        onclick="deleteWorkflowFromDetail()"
+      >
+        <i class="fas fa-trash"></i> Xóa
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal tạo/sửa quy tắc chấm điểm -->
+<div id="scoringRuleModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="scoringRuleModalTitle">Thêm Quy tắc Chấm điểm</h2>
+      <button class="close-btn" onclick="closeModal('scoringRuleModal')">
+        &times;
+      </button>
+    </div>
+    <form id="scoringRuleForm" onsubmit="saveScoringRuleFromModal(event)">
+      <div class="form-group">
+        <label for="scoringRuleAction">Hành động *</label>
+        <input
+          type="text"
+          id="scoringRuleAction"
+          required
+          placeholder="VD: Mở email, Truy cập trang giá, Tải tài liệu..."
+        />
+      </div>
+      <div class="form-group">
+        <label for="scoringRulePoints">Điểm *</label>
+        <input
+          type="number"
+          id="scoringRulePoints"
+          required
+          min="-100"
+          max="100"
+          placeholder="VD: 10"
+        />
+        <small style="color: #94a3b8; display: block; margin-top: 5px"
+          >Điểm dương để tăng, điểm âm để giảm</small
+        >
+      </div>
+      <div class="form-group">
+        <label for="scoringRuleDescription">Mô tả</label>
+        <textarea
+          id="scoringRuleDescription"
+          rows="2"
+          placeholder="Mô tả chi tiết về quy tắc..."
+        ></textarea>
+      </div>
+      <div class="form-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          onclick="closeModal('scoringRuleModal')"
+        >
+          Hủy
+        </button>
+        <button type="submit" class="btn btn-primary">Lưu</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- =============================================
+     TRIAL MANAGEMENT MODALS
+     ============================================= -->
+
+<!-- Modal thêm/sửa dùng thử -->
+<div id="trialModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="trialModalTitle">Thêm Dùng thử</h2>
+      <button class="close-btn" onclick="closeModal('trialModal')">
+        &times;
+      </button>
+    </div>
+    <form id="trialForm" onsubmit="saveTrialFromModal(event)">
+      <div class="form-group">
+        <label for="trialCustomer">Khách hàng *</label>
+        <select id="trialCustomer" required>
+          <option value="">-- Chọn khách hàng --</option>
+        </select>
+      </div>
+      
+      <div class="modal-grid-2">
+        <div class="form-group">
+          <label for="trialStartDate">Ngày bắt đầu *</label>
+          <input type="date" id="trialStartDate" required />
+        </div>
+        <div class="form-group">
+          <label for="trialDays">Số ngày dùng thử *</label>
+          <input 
+            type="number" 
+            id="trialDays" 
+            min="1" 
+            max="365"
+            value="30" 
+            required 
+            placeholder="30"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="trialEndDate">Ngày kết thúc</label>
+        <input type="date" id="trialEndDate" readonly style="background: #f8fafc; cursor: not-allowed;" />
+        <small style="color: #94a3b8; display: block; margin-top: 5px;">
+          <i class="fas fa-info-circle"></i> Tự động tính dựa trên ngày bắt đầu và số ngày
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="trialReminderDays">Nhắc trước (ngày)</label>
+        <input 
+          type="number" 
+          id="trialReminderDays" 
+          min="0" 
+          max="30"
+          value="3" 
+          placeholder="3"
+        />
+        <small style="color: #94a3b8; display: block; margin-top: 5px;">
+          <i class="fas fa-bell"></i> Hệ thống sẽ nhắc nhở trước khi hết hạn
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="trialNotes">Ghi chú</label>
+        <textarea 
+          id="trialNotes" 
+          rows="3"
+          placeholder="Ghi chú về gói dùng thử, điều kiện, cam kết..."
+        ></textarea>
+      </div>
+
+      <div class="info-box" style="margin-top: 16px;">
+        <h4><i class="fas fa-lightbulb"></i> Lưu ý</h4>
+        <ul style="margin: 8px 0 0 0; padding-left: 20px; font-size: 13px;">
+          <li>Khách hàng sẽ nhận email thông báo khi bắt đầu dùng thử</li>
+          <li>Hệ thống tự động nhắc nhở trước khi hết hạn</li>
+          <li>Có thể gia hạn hoặc chuyển đổi sang khách hàng chính thức</li>
+        </ul>
+      </div>
+
+      <div class="form-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          onclick="closeModal('trialModal')"
+        >
+          Hủy
+        </button>
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-save"></i> Lưu
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal xem chi tiết dùng thử -->
+<div id="trialDetailModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Chi tiết Dùng thử</h2>
+      <button class="close-btn" onclick="closeModal('trialDetailModal')">
+        &times;
+      </button>
+    </div>
+    <div style="padding: 20px;">
+      <!-- Customer Info -->
+      <div class="form-group">
+        <label style="font-weight: 600; color: #64748b; font-size: 13px;">Khách hàng</label>
+        <div id="trialDetailCustomer" style="font-size: 16px; font-weight: 600; color: #1e293b; margin-top: 4px;"></div>
+      </div>
+
+      <!-- Trial Period -->
+      <div class="modal-grid-2" style="margin-top: 16px;">
+        <div class="form-group">
+          <label style="font-weight: 600; color: #64748b; font-size: 13px;">Ngày bắt đầu</label>
+          <div id="trialDetailStartDate" style="font-size: 15px; color: #1e293b; margin-top: 4px;"></div>
+        </div>
+        <div class="form-group">
+          <label style="font-weight: 600; color: #64748b; font-size: 13px;">Ngày kết thúc</label>
+          <div id="trialDetailEndDate" style="font-size: 15px; color: #1e293b; margin-top: 4px;"></div>
+        </div>
+      </div>
+
+      <!-- Days Info -->
+      <div class="modal-grid-2" style="margin-top: 16px;">
+        <div class="form-group">
+          <label style="font-weight: 600; color: #64748b; font-size: 13px;">Tổng số ngày</label>
+          <div id="trialDetailDays" style="font-size: 15px; color: #1e293b; margin-top: 4px;"></div>
+        </div>
+        <div class="form-group">
+          <label style="font-weight: 600; color: #64748b; font-size: 13px;">Còn lại</label>
+          <div id="trialDetailDaysLeft" style="font-size: 15px; margin-top: 4px;"></div>
+        </div>
+      </div>
+
+      <!-- Reminder -->
+      <div class="form-group" style="margin-top: 16px;">
+        <label style="font-weight: 600; color: #64748b; font-size: 13px;">Nhắc trước</label>
+        <div id="trialDetailReminder" style="font-size: 15px; color: #1e293b; margin-top: 4px;"></div>
+      </div>
+
+      <!-- Notes -->
+      <div class="form-group" style="margin-top: 16px;">
+        <label style="font-weight: 600; color: #64748b; font-size: 13px;">Ghi chú</label>
+        <div id="trialDetailNotes" style="font-size: 14px; color: #64748b; margin-top: 4px; line-height: 1.6;"></div>
+      </div>
+
+      <!-- Status Box -->
+      <div id="trialDetailStatusBox" style="margin-top: 20px; padding: 16px; border-radius: 8px; border-left: 4px solid;"></div>
+    </div>
+
+    <div class="form-actions" style="padding: 15px 20px; border-top: 1px solid #e2e8f0;">
+      <button
+        type="button"
+        class="btn btn-secondary"
+        onclick="closeModal('trialDetailModal')"
+      >
+        Đóng
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        id="trialDetailEditBtn"
+        onclick="editTrialFromDetail()"
+      >
+        <i class="fas fa-edit"></i> Sửa
+      </button>
+      <button
+        type="button"
+        class="btn"
+        id="trialDetailConvertBtn"
+        onclick="convertTrialToCustomer()"
+        style="background: #10b981; color: white; border-color: #10b981;"
+      >
+        <i class="fas fa-check-circle"></i> Chuyển đổi
+      </button>
+      <button
+        type="button"
+        class="btn btn-danger"
+        id="trialDetailDeleteBtn"
+        onclick="deleteTrialFromDetail()"
+      >
+        <i class="fas fa-trash"></i> Xóa
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal chuyển đổi sang khách hàng chính thức -->
+<div id="convertTrialModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Chuyển đổi sang Khách hàng Chính thức</h2>
+      <button class="close-btn" onclick="closeModal('convertTrialModal')">
+        &times;
+      </button>
+    </div>
+    <form id="convertTrialForm" onsubmit="saveConvertTrial(event)">
+      <div class="success-box">
+        <h4><i class="fas fa-check-circle"></i> Xác nhận chuyển đổi</h4>
+        <p style="margin: 8px 0 0 0; font-size: 14px;">
+          Khách hàng <strong id="convertTrialCustomerName"></strong> sẽ được chuyển từ trạng thái 
+          <strong>Dùng thử</strong> sang <strong>Khách hàng chính thức</strong>.
+        </p>
+      </div>
+
+      <div class="form-group" style="margin-top: 16px;">
+        <label for="convertTrialNewStatus">Trạng thái mới *</label>
+        <select id="convertTrialNewStatus" required>
+          <option value="customer">Khách hàng chính thức</option>
+          <option value="evangelist">Khách hàng trung thành</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="convertTrialContractDate">Ngày ký hợp đồng</label>
+        <input type="date" id="convertTrialContractDate" />
+      </div>
+
+      <div class="form-group">
+        <label for="convertTrialContractValue">Giá trị hợp đồng (VND)</label>
+        <input 
+          type="number" 
+          id="convertTrialContractValue" 
+          min="0" 
+          step="1000"
+          placeholder="0"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="convertTrialNotes">Ghi chú chuyển đổi</label>
+        <textarea 
+          id="convertTrialNotes" 
+          rows="3"
+          placeholder="Ghi chú về quá trình chuyển đổi, điều kiện hợp đồng..."
+        ></textarea>
+      </div>
+
+      <div class="info-box">
+        <h4><i class="fas fa-info-circle"></i> Sau khi chuyển đổi</h4>
+        <ul style="margin: 8px 0 0 0; padding-left: 20px; font-size: 13px;">
+          <li>Khách hàng sẽ nhận email thông báo chuyển đổi thành công</li>
+          <li>Thông tin dùng thử sẽ được lưu vào lịch sử</li>
+          <li>Có thể tạo hợp đồng và theo dõi doanh thu</li>
+        </ul>
+      </div>
+
+      <div class="form-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          onclick="closeModal('convertTrialModal')"
+        >
+          Hủy
+        </button>
+        <button type="submit" class="btn btn-primary" style="background: #10b981; border-color: #10b981;">
+          <i class="fas fa-check-circle"></i> Xác nhận chuyển đổi
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal gia hạn dùng thử -->
+<div id="extendTrialModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Gia hạn Dùng thử</h2>
+      <button class="close-btn" onclick="closeModal('extendTrialModal')">
+        &times;
+      </button>
+    </div>
+    <form id="extendTrialForm" onsubmit="saveExtendTrial(event)">
+      <div class="warning-box">
+        <h4><i class="fas fa-clock"></i> Thông tin hiện tại</h4>
+        <div style="margin-top: 8px; font-size: 14px;">
+          <div style="display: flex; justify-content: space-between; padding: 4px 0;">
+            <span>Khách hàng:</span>
+            <strong id="extendTrialCustomerName"></strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 4px 0;">
+            <span>Ngày kết thúc hiện tại:</span>
+            <strong id="extendTrialCurrentEndDate"></strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 4px 0;">
+            <span>Còn lại:</span>
+            <strong id="extendTrialDaysLeft"></strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top: 16px;">
+        <label for="extendTrialDays">Số ngày gia hạn *</label>
+        <input 
+          type="number" 
+          id="extendTrialDays" 
+          min="1" 
+          max="365"
+          value="30" 
+          required 
+          placeholder="30"
+        />
+        <small style="color: #94a3b8; display: block; margin-top: 5px;">
+          <i class="fas fa-info-circle"></i> Thời gian sẽ được cộng thêm vào ngày kết thúc hiện tại
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="extendTrialNewEndDate">Ngày kết thúc mới</label>
+        <input type="date" id="extendTrialNewEndDate" readonly style="background: #f8fafc; cursor: not-allowed;" />
+      </div>
+
+      <div class="form-group">
+        <label for="extendTrialReason">Lý do gia hạn *</label>
+        <textarea 
+          id="extendTrialReason" 
+          rows="3"
+          required
+          placeholder="VD: Khách hàng yêu cầu thêm thời gian đánh giá..."
+        ></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          onclick="closeModal('extendTrialModal')"
+        >
+          Hủy
+        </button>
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-clock"></i> Gia hạn
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

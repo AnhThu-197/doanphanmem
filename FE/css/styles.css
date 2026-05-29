@@ -72,6 +72,11 @@ body {
     color: var(--text-secondary);
     min-height: 100vh;
     overflow-x: hidden;
+    overflow-y: auto;
+}
+
+body.modal-open {
+    overflow: hidden;
 }
 
 /* Scrollbar customization */
@@ -334,14 +339,16 @@ header {
 }
 
 /* Page Containers */
-main {
+main, #mainContent {
     padding: 32px;
-    max-width: 1200px;
+    max-width: 1400px;
     width: 100%;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
     gap: 24px;
+    overflow-y: auto;
+    flex: 1;
 }
 
 /* Standardized Headers */
